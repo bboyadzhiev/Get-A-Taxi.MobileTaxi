@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MobileTaxi</string>
+    <string name="title_activity_order_map">Order Map</string>
+</resources>

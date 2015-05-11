@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_startup">Get-A-Taxi Mobile Client</string>
+    <string name="network_disconnected_title">Network error</string>
+    <string name="network_disconnected_message">Internet connection not available, go to settings?</string>
+    <string name="positioning_unavailable_title">Positioning services unavailable!</string>
+    <string name="positioning_unavailable_message">Change settings?</string>
+
+    <string name="please_register">Please register!</string>
+    <string name="please_login">Registration found, please login!</string>
+    <string name="token_renew">Welcome back, %1$s</string>
+</resources>

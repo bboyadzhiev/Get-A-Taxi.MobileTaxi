@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="locations_title_txt">Location title</string>
+    <string name="location_address_txt">Location address</string>
+    <string name="location_lat_txt">Lat</string>
+    <string name="location_lon_txt">Long</string>
+    <string name="select_location">Select location</string>
+    <string name="enter_custom_location">Select custom locations</string>
+    <string name="select_destination_location">Select destination</string>
+    <string name="select_start_location">Select current location</string>
+    <string name="cancel_selection">Cancel</string>
+    <string name="stored_location_btn_txt">...</string>
+    <string name="enter_current_address">Enter current address</string>
+    <string name="enter_destination_address">Enter destination address</string>
+    <string name="address_found">Address located successfully!</string>
+    <string name="location_found">Location\'s address found!</string>
+    <string name="service_not_available">Address fetching service unavailable!</string>
+    <string name="invalid_lat_long_used">Invalid latitude and longitude values!</string>
+    <string name="invalid_address_used">Address was not recognized!</string>
+    <string name="address_not_found">Address could not be located!</string>
+    <string name="location_not_found">Location\'s address was not found!</string>
+    <string name="looking_up_location">Looking up address...</string>
+
+</resources>

@@ -1,0 +1,41 @@
+
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.getataxi.mobiletaxi.StartupActivity"
+    >
+
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/bg"
+        android:baselineAlignBottom="false"
+        android:clickable="false"
+        android:cropToPadding="false" />
+
+    <Button
+        android:id="@+id/proceed_to_order_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:text="@string/proceed_to_order"
+        android:gravity="bottom|center_horizontal"
+        android:layout_gravity="center_horizontal|bottom"
+        style="@style/AppTheme" />
+
+    <TextView
+        android:text="@string/loading"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:layout_gravity="center_horizontal|top"
+        style="@style/AppTheme" />
+</FrameLayout>
+
+

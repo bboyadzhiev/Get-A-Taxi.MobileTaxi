@@ -7,6 +7,7 @@ import android.widget.Toast;
 import com.getataxi.mobiletaxi.comm.contracts.TaxiOrdersAPI;
 import com.getataxi.mobiletaxi.comm.contracts.TaxiAPI;
 import com.getataxi.mobiletaxi.comm.models.OrderDetailsDM;
+import com.getataxi.mobiletaxi.comm.models.TaxiDM;
 import com.getataxi.mobiletaxi.comm.models.TaxiStandDM;
 import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.comm.models.OrderDM;
@@ -82,9 +83,9 @@ public class RestClientManager {
                 String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
                 Log.d("RESTMANAGER: ", "Token update FAILED!");
                 Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
-if (error.getResponse().getStatus() == 401){
+                if (error.getResponse().getStatus() == 401){
 
-}
+                }
             }
         });
     }
@@ -99,13 +100,18 @@ if (error.getResponse().getStatus() == 401){
 
 
     // TaxiStands
-    public static void getTaxiStands(Context context, Callback<List<TaxiStandDM>> callback){
+    public static void getTaxiStandsByLocation(double lat, double lon, Context context, Callback<List<TaxiStandDM>> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
-        client.getTaxiStandsService(heads).getTaxiStands(callback);
+        client.getTaxiStandsService(heads).getTaxiStandsByLocation(lat, lon, callback);
     }
 
     public static void getTaxiStand(int taxiStandId, Context context, Callback<TaxiStandDM> callback){
         client.getTaxiStandsService(getAuthorisationHeaders(context)).getTaxiStand(taxiStandId, callback);
+    }
+
+    public static void getTaxiStandsPage(int page, Context context, Callback callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        client.getTaxiStandsService(heads).getTaxiStandsPage(page, callback);
     }
 
 //    public static void updateTaxiLocation(final LocationDM locationDM, Context context, Callback callback){
@@ -113,6 +119,7 @@ if (error.getResponse().getStatus() == 401){
 //        LocationsAPI locationsApi = client.getLocationsService(heads);
 //        locationsApi.updateLocation(locationDM, callback);
 //    }
+
     // Orders
     public static void addOrder(OrderDetailsDM order, Context context, Callback<OrderDetailsDM> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
@@ -129,6 +136,17 @@ if (error.getResponse().getStatus() == 401){
         TaxiOrdersAPI ordersAPI = client.getOrdersService(heads);
         ordersAPI.getOrder(id, callback);
     }
+    public static void assignOrder(int id, Context context, Callback<OrderDetailsDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiOrdersAPI ordersAPI = client.getOrdersService(heads);
+        ordersAPI.assignOrder(id, callback);
+    }
+
+    public static void updateOrder(OrderDetailsDM orderDM, Context context, Callback<OrderDetailsDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiOrdersAPI ordersAPI = client.getOrdersService(heads);
+        ordersAPI.updateOrder(orderDM, callback);
+    }
 
     public static void cancelOrder(int id, Context context, Callback<OrderDM> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
@@ -137,10 +155,39 @@ if (error.getResponse().getStatus() == 401){
     }
 
     // Taxi
+    public static void getTaxies(Context context, Callback<List<TaxiDetailsDM>> callback) {
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiAPI taxiApi = client.getTaxiService(heads);
+        taxiApi.getTaxies(callback);
+    }
+
     public static void getTaxiDetails(int id, Context context, Callback<TaxiDetailsDM> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         TaxiAPI taxiApi = client.getTaxiService(heads);
         taxiApi.getTaxiDetails(id, callback);
     }
 
+    public static void getTaxiesPage(int page, Context context, Callback<List<TaxiDetailsDM>> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiAPI taxiApi = client.getTaxiService(heads);
+        taxiApi.getTaxiesPage(page, callback);
+    }
+
+    public static void assignDriver(TaxiDM taxi, Context context, Callback<TaxiDetailsDM> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiAPI taxiApi = client.getTaxiService(heads);
+        taxiApi.assignDriver(taxi, callback);
+    }
+
+    public static void updateTaxi(TaxiDM taxi, Context context, Callback callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiAPI taxiApi = client.getTaxiService(heads);
+        taxiApi.updateTaxi(taxi, callback);
+    }
+
+    public static void unassignDriver(int id, Context context, Callback callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiAPI taxiApi = client.getTaxiService(heads);
+        taxiApi.unassignDriver(id, callback);
+    }
 }

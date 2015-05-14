@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="bottom" >
+
+    <!-- Address inputs-->
+    <RelativeLayout
+        android:id="@+id/startGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+        <EditText
+            android:id="@+id/startAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/startAddress_btn"
+            android:layout_toStartOf="@+id/startAddress_btn"
+            android:layout_alignBottom="@+id/startAddress_btn"
+            android:hint="@string/enter_current_address"
+            android:layout_alignParentTop="true"
+            android:background="@color/background_material_light"
+            />
+        <ImageButton
+            android:id="@+id/startAddress_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            />
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/destinationGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/startGroup"
+        >
+        <EditText
+            android:id="@+id/destinationAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/enter_destination_address"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/destinationAddress_btn"
+            android:layout_toStartOf="@+id/destinationAddress_btn"
+            android:layout_alignBottom="@+id/destinationAddress_btn"
+            android:background="@color/background_material_light"
+            />
+
+        <ImageButton
+            android:id="@+id/destinationAddress_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            />
+    </RelativeLayout>
+
+</RelativeLayout>

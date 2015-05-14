@@ -1,9 +1,10 @@
-package com.getataxi.mobiletaxi.comm;
+package com.getataxi.mobiletaxi;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -16,9 +17,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.getataxi.mobiletaxi.R;
-import com.getataxi.mobiletaxi.comm.models.OrderDM;
-import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
+import com.getataxi.mobiletaxi.comm.RestClientManager;
+import com.getataxi.mobiletaxi.comm.models.TaxiDM;
+import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
+import com.getataxi.mobiletaxi.utils.TaxiesListAdapter;
+import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 
 import org.apache.http.HttpStatus;
 
@@ -29,62 +32,72 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class OrderAssignmentActivity extends ActionBarActivity implements
+public class TaxiAssignmentActivity extends ActionBarActivity  implements
         AdapterView.OnItemClickListener {
 
-    private ArrayList<OrderDM> orders;
+    List<TaxiDetailsDM> taxies;
+    TaxiDetailsDM selectedTaxi;
     private ListView ordersList;
-    private Button assignButton;
+    private Button assignTaxiButton;
 
-    private TextView orderAddressTxt;
-    private TextView orderDestinationTxt;
-    private TextView clientCommentTxt;
+    private TextView taxiIdTxt;
+    private TextView taxiPlateTxt;
 
     private View mProgressView;
 
-    ClientOrdersListAdapter ordersListAdapter;
+    TaxiesListAdapter taxiesListAdapter;
     Context context = this;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_order_assignment);
-        orders = new ArrayList<>();
-        mProgressView = findViewById(R.id.get_orders_progress);
-        getDistrictOrders();
-        this.assignButton = (Button)this.findViewById(R.id.assignButton);
-        assignButton.setEnabled(false);
-        assignButton.setOnClickListener(new View.OnClickListener() {
+        setContentView(R.layout.activity_taxi_assignment);
+
+        taxies = new ArrayList<>();
+        mProgressView = findViewById(R.id.get_taxies_progress);
+        getDistrictTaxies();
+        this.assignTaxiButton = (Button)this.findViewById(R.id.assignTaxiButton);
+        assignTaxiButton.setEnabled(false);
+        assignTaxiButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: Send PUT request to server!
+                if(selectedTaxi != null) {
+                    TaxiDM taxi = new TaxiDM();
+                    taxi.taxiId = selectedTaxi.taxiId;
+                    taxi.latitude = selectedTaxi.latitude;
+                    taxi.longitude = selectedTaxi.longitude;
+                    assignTaxi(taxi);
+                }
             }
         });
 
         ordersList = (ListView) this.findViewById(R.id.orders_list_view);
 
-        ordersListAdapter = new ClientOrdersListAdapter(context,
-                R.layout.fragment_order_list_item, orders);
+        taxiesListAdapter = new TaxiesListAdapter(context,
+                R.layout.fragment_taxi_list_item, taxies);
 
-        ordersList.setAdapter(ordersListAdapter);
+        ordersList.setAdapter(taxiesListAdapter);
         ordersList.setOnItemClickListener(this);
 
-        getDistrictOrders();
+        getDistrictTaxies();
     }
 
-    private void getDistrictOrders() {
+    private void assignTaxi(TaxiDM taxi) {
         showProgress(true);
-        RestClientManager.getDistrictOrders(context, new Callback<List<OrderDM>>() {
+        RestClientManager.assignTaxi(taxi, context, new Callback<TaxiDetailsDM>() {
             @Override
-            public void success(List<OrderDM> orderDMs, Response response) {
+            public void success(TaxiDetailsDM taxiDetailsDM, Response response) {
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
-                    orders.clear();
-                    orders.addAll(orderDMs);
+                    selectedTaxi = taxiDetailsDM;
+                    UserPreferencesManager.setAssignedTaxi(selectedTaxi, context);
+                    Toast.makeText(context, getResources().getText(R.string.taxi_assigned), Toast.LENGTH_LONG).show();
+
+                    Intent intent = new Intent(context, OrderAssignmentActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
                 }
 
-                if (status == HttpStatus.SC_BAD_REQUEST) {
-                    // Cancelled or finished already
+                if (status == HttpStatus.SC_BAD_REQUEST || status == HttpStatus.SC_NOT_FOUND) {
                     Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
                 }
 
@@ -93,8 +106,35 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
             @Override
             public void failure(RetrofitError error) {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                 showProgress(false);
-                assignButton.setEnabled(true);
+            }
+        });
+    }
+
+    private void getDistrictTaxies() {
+        showProgress(true);
+        RestClientManager.getTaxies(context, new Callback<List<TaxiDetailsDM>>() {
+            @Override
+            public void success(List<TaxiDetailsDM> taxiesDMs, Response response) {
+                int status = response.getStatus();
+                if (status == HttpStatus.SC_OK) {
+                    taxies.clear();
+                    taxies.addAll(taxiesDMs);
+                }
+
+                if (status == HttpStatus.SC_BAD_REQUEST) {
+                    Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                }
+
+                showProgress(false);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                showProgress(false);
+                assignTaxiButton.setEnabled(true);
             }
         });
     }
@@ -124,14 +164,12 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        orderAddressTxt = (TextView)findViewById(R.id.orderAddressDetail);
-        orderAddressTxt.setText(orders.get(position).orderAddress);
-        orderDestinationTxt = (TextView)findViewById(R.id.orderDestinationDetail);
-        orderDestinationTxt.setText(orders.get(position).destinationAddress);
-        clientCommentTxt = (TextView)findViewById(R.id.clientCommentDetail);
-        clientCommentTxt.setText(orders.get(position).userComment);
-
-        assignButton.setEnabled(true);
+        taxiIdTxt = (TextView)findViewById(R.id.taxiIdDetail);
+        taxiIdTxt.setText(String.valueOf(taxies.get(position).taxiId));
+        taxiPlateTxt = (TextView)findViewById(R.id.taxiPlateDetail);
+        taxiPlateTxt.setText(taxies.get(position).plate);
+        selectedTaxi = taxies.get(position);
+        assignTaxiButton.setEnabled(true);
     }
 
     /**

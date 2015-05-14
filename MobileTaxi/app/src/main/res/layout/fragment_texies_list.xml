@@ -3,13 +3,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         xmlns:tools="http://schemas.android.com/tools"
-        tools:context="com.getataxi.mobiletaxi.fragments.OrdersListFragment">
+        tools:context="com.getataxi.mobiletaxi.fragments.TaxiesListFragment">
     <TextView
-        android:id="@+id/ordersListTitle"
+        android:id="@+id/taxiesListTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="@string/orders_title"
+        android:text="@string/taxies_title"
         android:textSize="25sp" />
 
     <ListView

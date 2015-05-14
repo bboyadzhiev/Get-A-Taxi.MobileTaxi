@@ -195,16 +195,29 @@ public class UserPreferencesManager {
         Type taxiType = new TypeToken<TaxiDetailsDM>(){}.getType();
         String taxiInfo = gson.toJson(taxi,taxiType);
         editor.putString(Constants.ASSIGNED_TAXI, taxiInfo);
+        editor.putInt(Constants.ASSIGNED_TAXI_ID, taxi.taxiId);
         editor.commit();
     }
 
     public static TaxiDetailsDM getAssignedTaxi(Context context){
-        SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        String taxiInfo = userPref.getString(Constants.USER_LOCATIONS, "");
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        String taxiInfo = userPrefs.getString(Constants.ASSIGNED_TAXI, "");
         Gson gson = new Gson();
         Type taxiType = new TypeToken<TaxiDetailsDM>(){}.getType();
         TaxiDetailsDM taxi = gson.fromJson(taxiInfo, taxiType);
         return taxi;
+    }
+
+    public static void clearAssignedTaxi(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putInt(Constants.ASSIGNED_TAXI_ID, -1);
+        editor.commit();
+    }
+
+    public static boolean hasAssignedTaxi(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getInt(Constants.ASSIGNED_TAXI_ID, -1) != -1;
     }
 
 }

@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.LoaderManager;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -12,7 +11,6 @@ import android.content.Loader;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v7.app.ActionBarActivity;
@@ -46,13 +44,6 @@ import retrofit.client.Response;
 
 
 public class LoginActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
-
-
-    /**
-     * Keep track of the login task to ensure we can cancel it if requested.
-     */
-    private UserLoginTask mAuthTask = null;
-
 
     // UI references.
     private AutoCompleteTextView mEmailView;
@@ -194,9 +185,10 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
                             UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
                             showProgress(false);
                             Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
-                            Intent orderMap = new Intent(context, OrderMap.class);
-                            orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(orderMap);
+                            // TODO: REVIEW
+                            Intent taxiAssignmentActivity = new Intent(context, TaxiAssignmentActivity.class);
+                            taxiAssignmentActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(taxiAssignmentActivity);
                         } catch (IllegalStateException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
@@ -320,74 +312,4 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
         mEmailView.setAdapter(adapter);
     }
 
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    @Deprecated
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mEmail;
-        private final String mPassword;
-        private ProgressDialog dialog;
-
-        UserLoginTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            //RestClientManager manager = new RestClientManager(getApplicationContext());
-
-            try {
-                // manager.login(this.mEmail, this.mPassword);
-                //  Thread.sleep(2000);
-            } catch (RetrofitError e) {
-                return false;
-            }
-
-//            for (String credential : DUMMY_CREDENTIALS) {
-//                String[] pieces = credential.split(":");
-//                if (pieces[0].equals(mEmail)) {
-//                    // Account exists, return true if the password matches.
-//                    return pieces[1].equals(mPassword);
-//                }
-//            }
-
-
-            return true;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            dialog = new ProgressDialog(LoginActivity.this);
-            dialog.setMessage("Logging in...");
-            dialog.show();
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                String email =  UserPreferencesManager.getEmail(getApplicationContext());
-                Toast.makeText(getApplicationContext(), "Welcome, " + email, Toast.LENGTH_LONG).show();
-                Intent registerIntent = new Intent(getApplicationContext(), OrderMap.class);
-                startActivity(registerIntent);
-                // finish();
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
-    }
 }

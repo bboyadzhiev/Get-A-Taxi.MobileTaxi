@@ -18,4 +18,11 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="assign_order_txt">Get order!</string>
+    <string name="title_activity_taxi_assignment">TaxiAssignmentActivity</string>
+    <string name="assign_taxi_txt">Assign taxi</string>
+    <string name="taxies_title">Available taxies</string>
+    <string name="orders_title">Available orders</string>
+    <string name="skip_assign_txt">Skip assignment</string>
+    <string name="taxi_assigned">Taxi assigned sucessfully!</string>
+    <string name="unassign_taxi_txt">Unassign taxi</string>
 </resources>

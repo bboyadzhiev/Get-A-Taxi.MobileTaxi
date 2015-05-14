@@ -3,30 +3,22 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.getataxi.mobiletaxi.fragments.OrdersListFragment">
+    tools:context="com.getataxi.mobiletaxi.fragments.TaxiesListFragment">
 
     <TextView
-        android:id="@+id/orderAddressDetail"
+        android:id="@+id/taxiIdDetail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="Order Address"
+        android:text="Taxi Id"
         android:textSize="20sp" />
 
     <TextView
-        android:id="@+id/orderDestinationDetail"
-        android:layout_width="wrap_content"
+        android:id="@+id/taxiPlateDetail"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="Order Destination"
-        android:textSize="15sp" />
-
-    <TextView
-        android:id="@+id/clientCommentDetail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="Client Comment"
+        android:text="TAXI PLATE"
         android:textSize="15sp" />
 
 </LinearLayout>

@@ -8,7 +8,7 @@ android:paddingRight="@dimen/activity_horizontal_margin"
 android:paddingTop="@dimen/activity_vertical_margin"
 android:weightSum="100"
 android:orientation="horizontal"
-tools:context="com.getataxi.mobiletaxi.comm.OrderAssignmentActivity" >
+tools:context="com.getataxi.mobiletaxi.OrderAssignmentActivity" >
 
     <!-- Progress Bar -->
     <ProgressBar
@@ -21,19 +21,46 @@ tools:context="com.getataxi.mobiletaxi.comm.OrderAssignmentActivity" >
         android:layout_centerHorizontal="true"
         android:visibility="gone" />
     <fragment
-        android:id="@+id/fragment1"
-        android:name="com.getataxi.mobiletaxi.comm.OrdersListFragment"
+        android:id="@+id/ordersListFragment"
+        android:name="com.getataxi.mobiletaxi.fragments.OrdersListFragment"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        tools:layout="@layout/fragment_orders_list"
+        android:layout_above="@+id/orderDetailsFragment" />
+
+    <fragment
+        android:id="@+id/orderDetailsFragment"
+        android:name="com.getataxi.mobiletaxi.fragments.OrderDetailsFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        />
-    <Button
-        android:id="@+id/assignButton"
+        tools:layout="@layout/fragment_order_details"
+        android:layout_above="@+id/orderAssignmentButtons"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
+    <LinearLayout
+        android:id="@+id/orderAssignmentButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/assign_order_txt"
-        />
+        android:weightSum="1">
+
+
+        <Button
+            android:id="@+id/assignOrderButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/assign_order_txt"
+            android:layout_weight="0.5" />
+        <Button
+            android:id="@+id/skipOrderAssignmentButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/skip_assign_txt"
+            android:layout_weight="0.5"
+            />
+    </LinearLayout>
 
 
 </RelativeLayout>

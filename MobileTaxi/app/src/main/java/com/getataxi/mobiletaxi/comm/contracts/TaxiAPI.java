@@ -28,11 +28,11 @@ public interface TaxiAPI {
     void getTaxiesPage(@Path("page") int page, Callback<List<TaxiDetailsDM>> callback);
 
     @POST("/api/Taxi")
-    void assignDriver(@Body TaxiDM taxiDM,  Callback<TaxiDetailsDM> callback);
+    void assignTaxi(@Body TaxiDM taxiDM, Callback<TaxiDetailsDM> callback);
 
     @PUT("/api/Taxi")
     void updateTaxi(@Body TaxiDM taxiDM, Callback callback);
 
     @DELETE("/api/Taxi/{id}")
-    void unassignDriver(@Path("id") int id, Callback callback);
+    void unassignTaxi(@Path("id") int id, Callback callback);
 }

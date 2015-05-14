@@ -50,8 +50,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".comm.OrderAssignmentActivity"
+            android:name=".OrderAssignmentActivity"
             android:label="@string/title_activity_order_assignment" >
+        </activity>
+        <activity
+            android:name=".TaxiAssignmentActivity"
+            android:label="@string/title_activity_taxi_assignment" >
         </activity>
     </application>
 

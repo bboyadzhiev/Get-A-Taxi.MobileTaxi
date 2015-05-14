@@ -1,4 +1,4 @@
-package com.getataxi.mobiletaxi;
+package com.getataxi.mobiletaxi.fragments;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -6,16 +6,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-/**
- * Created by bvb on 19.4.2015 г..
- */
-public class AddressesInputsFragment extends Fragment {
+import com.getataxi.mobiletaxi.R;
 
+
+public class TaxiesListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View v = inflater.inflate(R.layout.addresses_fragment, container, false);
+        View v = inflater.inflate(R.layout.fragment_texies_list, container, false);
+
         return v;
     }
+
 }

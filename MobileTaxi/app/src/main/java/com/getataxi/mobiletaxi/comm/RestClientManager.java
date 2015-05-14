@@ -179,10 +179,10 @@ public class RestClientManager {
         taxiApi.getTaxiesPage(page, callback);
     }
 
-    public static void assignDriver(TaxiDM taxi, Context context, Callback<TaxiDetailsDM> callback){
+    public static void assignTaxi(TaxiDM taxi, Context context, Callback<TaxiDetailsDM> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         TaxiAPI taxiApi = client.getTaxiService(heads);
-        taxiApi.assignDriver(taxi, callback);
+        taxiApi.assignTaxi(taxi, callback);
     }
 
     public static void updateTaxi(TaxiDM taxi, Context context, Callback callback){
@@ -191,9 +191,9 @@ public class RestClientManager {
         taxiApi.updateTaxi(taxi, callback);
     }
 
-    public static void unassignDriver(int id, Context context, Callback callback){
+    public static void unassignTaxi(int id, Context context, Callback callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         TaxiAPI taxiApi = client.getTaxiService(heads);
-        taxiApi.unassignDriver(id, callback);
+        taxiApi.unassignTaxi(id, callback);
     }
 }

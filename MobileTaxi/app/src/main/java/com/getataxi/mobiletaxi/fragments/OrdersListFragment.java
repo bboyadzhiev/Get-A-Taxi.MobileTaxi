@@ -1,4 +1,4 @@
-package com.getataxi.mobiletaxi.comm;
+package com.getataxi.mobiletaxi.fragments;
 
 import android.os.Bundle;
 import android.app.Fragment;

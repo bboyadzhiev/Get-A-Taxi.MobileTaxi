@@ -1,0 +1,33 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="horizontal"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.getataxi.mobiletaxi.comm.OrdersListFragment">
+
+    <TextView
+        android:id="@+id/orderAddressDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Order Address"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/orderDestinationDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Order Destination"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/clientCommentDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Client Comment"
+        android:textSize="15sp" />
+
+</LinearLayout>

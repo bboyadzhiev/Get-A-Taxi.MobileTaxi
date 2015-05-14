@@ -5,7 +5,7 @@ import retrofit.RetrofitError;
 /**
  * Created by bvb on 11.4.2015 г..
  */
-public abstract interface RequestListener<T> {
+public interface RequestListener<T> {
 
     void onSuccess(T response);
 

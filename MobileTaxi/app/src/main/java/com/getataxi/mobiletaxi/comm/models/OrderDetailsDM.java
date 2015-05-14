@@ -37,6 +37,4 @@ public class OrderDetailsDM extends OrderDM {
     public String taxiPlate;
     @SerializedName("driverPhone")
     public String driverPhone;
-    @SerializedName("driverName")
-    public String driverName;
 }

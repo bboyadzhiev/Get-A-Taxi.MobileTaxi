@@ -19,20 +19,20 @@ import retrofit.http.Path;
  */
 public interface TaxiAPI {
     @GET("/api/Taxi")
-    void getTaxies(Callback<List<TaxiDM>> callback);
+    void getTaxies(Callback<List<TaxiDetailsDM>> callback);
 
     @GET("/api/Taxi/{id}")
     void getTaxiDetails(@Path("id") int id, Callback<TaxiDetailsDM> callback);
 
     @GET("/api/Taxi/{page}")
-    void getTaxiesPage(@Path("page") int page, Callback<List<TaxiDM>> callback);
+    void getTaxiesPage(@Path("page") int page, Callback<List<TaxiDetailsDM>> callback);
 
     @POST("/api/Taxi")
-    void assignTaxi(@Body TaxiDM taxiDM,  Callback<TaxiDM> callback);
+    void assignDriver(@Body TaxiDM taxiDM,  Callback<TaxiDetailsDM> callback);
 
     @PUT("/api/Taxi")
     void updateTaxi(@Body TaxiDM taxiDM, Callback callback);
 
     @DELETE("/api/Taxi/{id}")
-    void unassignTaxi(@Path("id") int id, Callback callback);
+    void unassignDriver(@Path("id") int id, Callback callback);
 }

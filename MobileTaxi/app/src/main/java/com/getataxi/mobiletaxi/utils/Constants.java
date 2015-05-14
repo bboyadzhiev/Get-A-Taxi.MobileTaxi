@@ -74,6 +74,8 @@ public final class Constants {
     public static final String LAST_ORDER_ID = PACKAGE_NAME + ".lastOrderId";
     public static final String TRACKING_ENABLED = PACKAGE_NAME + "trackingEnabled";
 
+    public static final String ASSIGNED_TAXI =  PACKAGE_NAME + ".ASSIGNED_TAXI";
+
     // UI - no UI strings should be here!
 
     // DEBUGGING STRINGS

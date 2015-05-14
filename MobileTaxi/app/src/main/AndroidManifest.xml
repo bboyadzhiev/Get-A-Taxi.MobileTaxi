@@ -49,6 +49,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".comm.OrderAssignmentActivity"
+            android:label="@string/title_activity_order_assignment" >
+        </activity>
     </application>
 
 </manifest>

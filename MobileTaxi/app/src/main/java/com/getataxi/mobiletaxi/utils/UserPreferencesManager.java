@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.getataxi.mobiletaxi.comm.models.OrderDM;
+import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
 import com.getataxi.mobiletaxi.comm.models.TaxiStandDM;
 import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.comm.models.RegisterUserDM;
@@ -70,6 +71,8 @@ public class UserPreferencesManager {
         return false;
     }
 
+
+    // Driver account data
     public static void saveUserData(RegisterUserDM userDM, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
@@ -150,7 +153,9 @@ public class UserPreferencesManager {
         editor.commit();
     }
 
-    public static void storeLocations(List<TaxiStandDM> locationDMList, Context context){
+
+    // Taxi Stands data
+    public static void storeTaxiStands(List<TaxiStandDM> locationDMList, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
         Gson gson = new Gson();
@@ -160,7 +165,7 @@ public class UserPreferencesManager {
         editor.commit();
     }
 
-    public static List<TaxiStandDM> loadLocations(Context context){
+    public static List<TaxiStandDM> loadTaxiStands(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String locations = userPref.getString(Constants.USER_LOCATIONS, "");
         Gson gson = new Gson();
@@ -169,6 +174,7 @@ public class UserPreferencesManager {
         return locationsData;
     }
 
+    // Current order
     public static void storeOrderId(int orderId, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
@@ -181,17 +187,24 @@ public class UserPreferencesManager {
         return userPrefs.getInt(Constants.LAST_ORDER_ID, -1);
     }
 
-    @Deprecated
-    public static void setTrackingState(boolean trackingEnabled, Context context){
+    // Assigned Taxi details
+    public static void setAssignedTaxi(TaxiDetailsDM taxi, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
-        editor.putBoolean(Constants.TRACKING_ENABLED, trackingEnabled);
+        Gson gson = new Gson();
+        Type taxiType = new TypeToken<TaxiDetailsDM>(){}.getType();
+        String taxiInfo = gson.toJson(taxi,taxiType);
+        editor.putString(Constants.ASSIGNED_TAXI, taxiInfo);
         editor.commit();
     }
 
-    @Deprecated
-    public static boolean getTrackingState(Context context){
-        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        return userPrefs.getBoolean(Constants.TRACKING_ENABLED, false);
+    public static TaxiDetailsDM getAssignedTaxi(Context context){
+        SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        String taxiInfo = userPref.getString(Constants.USER_LOCATIONS, "");
+        Gson gson = new Gson();
+        Type taxiType = new TypeToken<TaxiDetailsDM>(){}.getType();
+        TaxiDetailsDM taxi = gson.fromJson(taxiInfo, taxiType);
+        return taxi;
     }
+
 }

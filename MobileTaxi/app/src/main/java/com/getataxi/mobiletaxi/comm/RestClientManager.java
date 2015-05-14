@@ -131,6 +131,12 @@ public class RestClientManager {
         client.getOrdersService(getAuthorisationHeaders(context)).getOrdersPage(page, callback);
     }
 
+    public static void getDistrictOrders(Context context, Callback<List<OrderDM>> callback){
+        List<NameValuePair> heads = getAuthorisationHeaders(context);
+        TaxiOrdersAPI ordersAPI = client.getOrdersService(heads);
+        ordersAPI.getOrders(callback);
+    }
+
     public static void getOrder(int id, Context context, Callback<OrderDetailsDM> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         TaxiOrdersAPI ordersAPI = client.getOrdersService(heads);

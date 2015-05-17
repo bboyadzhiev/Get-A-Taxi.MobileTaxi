@@ -38,6 +38,13 @@ public class LocationService extends Service
     {
         super.onCreate();
         broadcastIntent = new Intent(Constants.LOCATION_UPDATED);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        listener = new ClientLocationListener();
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                Constants.LOCATION_UPDATE_INTERVAL,
+                Constants.LOCATION_UPDATE_DISTANCE,
+                listener);
     }
 
     @Override
@@ -53,13 +60,8 @@ public class LocationService extends Service
         Bundle b = intent.getExtras();
         reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        listener = new ClientLocationListener();
-        locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                Constants.LOCATION_UPDATE_INTERVAL,
-                Constants.LOCATION_UPDATE_DISTANCE,
-                listener);
+
+
         return Service.START_NOT_STICKY;
     }
 

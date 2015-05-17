@@ -12,7 +12,9 @@
         android:gravity="center_horizontal"
         android:text="Order Address"
         android:textSize="20sp" />
-
+    <Space
+    android:layout_width="15sp"
+    android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/orderDestinationDetail"
         android:layout_width="wrap_content"
@@ -20,7 +22,9 @@
         android:gravity="center_horizontal"
         android:text="Order Destination"
         android:textSize="15sp" />
-
+    <Space
+        android:layout_width="15sp"
+        android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/clientCommentDetail"
         android:layout_width="wrap_content"

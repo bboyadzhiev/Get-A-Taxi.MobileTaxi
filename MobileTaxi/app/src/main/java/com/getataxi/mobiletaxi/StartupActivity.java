@@ -85,15 +85,18 @@ public class StartupActivity extends Activity {
             LoginUserDM loginUserDM = UserPreferencesManager.getLoginData(context);
             // Check if still logged-in
             if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM)){
-                Intent orderMap = new Intent(context, OrderMap.class);
+
+                if(UserPreferencesManager.hasAssignedTaxi(context)){
+                    Intent orderMap = new Intent(context, OrderAssignmentActivity.class);
+                    orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(orderMap);
+                }
+                Intent orderMap = new Intent(context, TaxiAssignmentActivity.class);
                 orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(orderMap);
+
             }else{
                 String grantType = "password";
-//                RestClientManager manager = new RestClientManager(context);
-//                manager.login(loginUserDM, grantType);
-                //        RestClientManager.login(loginUserDM, grantType, context); // static
-
                 RestClientManager.login(loginUserDM, grantType, new Callback<LoginUserDM>() {
                     @Override
                     public void success(LoginUserDM loginUserDM, Response response) {
@@ -104,9 +107,9 @@ public class StartupActivity extends Activity {
                                 Toast.makeText(context, String.format(s, loginUserDM.email), Toast.LENGTH_LONG).show();
                                 UserPreferencesManager.saveLoginData(loginUserDM, context);
 
-                                Intent orderMap = new Intent(context, OrderMap.class);
-                                orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                context.startActivity(orderMap);
+                                Intent intent = new Intent(context, TaxiAssignmentActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                context.startActivity(intent);
 
                             } catch (IllegalStateException e) {
                                 e.printStackTrace();
@@ -124,23 +127,14 @@ public class StartupActivity extends Activity {
                 });
 
             }
-        } else  {
-            // No login credentials, check for stored registration
+
+        } else {
+            // No stored credentials found, suggest login
             Resources res = getResources();
-            if (UserPreferencesManager.checkForRegistration(context)){
-                // Stored credentials found, suggest login
-                Toast.makeText(context, res.getString(R.string.please_login), Toast.LENGTH_LONG).show();
-                Intent loginIntent = new Intent(context, LoginActivity.class);
-                loginIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(loginIntent);
-            } else {
-                // No stored credentials at all, suggesting new registration
-                Toast.makeText(context, res.getString(R.string.please_register), Toast.LENGTH_LONG).show();
-                Intent registerIntent = new Intent(context, LoginActivity.class);
-                registerIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(registerIntent);
-            }
+            Toast.makeText(context, res.getString(R.string.please_login), Toast.LENGTH_LONG).show();
+            Intent loginIntent = new Intent(context, LoginActivity.class);
+            loginIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(loginIntent);
         }
     }
-
 }

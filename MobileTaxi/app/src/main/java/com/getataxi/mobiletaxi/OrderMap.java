@@ -68,11 +68,12 @@ public class OrderMap extends FragmentActivity {
     // Initialized by the broadcast receiver
     //private LocationDM currentReverseGeocodedLocation = null;
 
-    private Marker currentLocationMarker;
+    private Marker clientLocationMarker;
     private Marker destinationLocationMarker;
     private Marker taxiLocationMarker;
     private boolean trackingEnabled;
-    private Button orderButton;
+    private Button cancelOrderButton;
+    private Button placeOrderButton;
 
 
     // Order details
@@ -103,20 +104,17 @@ public class OrderMap extends FragmentActivity {
 
                 taxiDriverLocation = data.getParcelable(Constants.LOCATION);
 
-
                 double clientLat = taxiDriverLocation.getLatitude();
                 double clientLon = taxiDriverLocation.getLongitude();
                 String markerTitle = "Taxi";
                 LatLng latLng =  new LatLng(clientLat, clientLon);
 
-
-
-                currentLocationMarker = updateMarker(
-                        currentLocationMarker,
+                taxiLocationMarker = updateMarker(
+                        taxiLocationMarker,
                         latLng,
                         markerTitle
                 );
-                currentLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi));
+                taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi));
 
 
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
@@ -125,6 +123,7 @@ public class OrderMap extends FragmentActivity {
                 // Checking if we have any order data
                 if(orderDM == null){
                     orderDM = new OrderDetailsDM();
+                    orderDM.orderId = -1;
                     return;
                 }
 
@@ -139,12 +138,12 @@ public class OrderMap extends FragmentActivity {
 
                 String markerTitle = orderDM.taxiPlate;
                 LatLng latLng =  new LatLng(clientLocation.getLatitude(), clientLocation.getLongitude());
-                taxiLocationMarker = updateMarker(
-                        taxiLocationMarker,
+                clientLocationMarker = updateMarker(
+                        clientLocationMarker,
                         latLng,
                         markerTitle
                 );
-                taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.person));
+                clientLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.person));
             }
         }
     };
@@ -177,20 +176,32 @@ public class OrderMap extends FragmentActivity {
         int lastOrderId = UserPreferencesManager.getLastOrderId(context);
         if(lastOrderId == -1){
             // No stored order id!
+            cancelOrderButton.setText(getResources().getString(R.string.place_driver_order));
+            cancelOrderButton.setEnabled(true);
             return;
         }
         // Driver has taken an order in the district
         RestClientManager.getOrder(lastOrderId, context, new Callback<OrderDetailsDM>() {
             @Override
             public void success(OrderDetailsDM assignedOrderDM, Response response) {
-                orderButton.setText(getResources().getString(R.string.cancel_order_txt));
-                orderButton.setEnabled(true);
+
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
                     try {
+                        cancelOrderButton.setEnabled(false);
+                        if(assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
+                            cancelOrderButton.setText(getResources().getString(R.string.cancel_order_txt));
+                            cancelOrderButton.setEnabled(true);
+                        }
+
+                        if(!assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
+                            cancelOrderButton.setText(getResources().getString(R.string.finish_order_txt));
+                            cancelOrderButton.setEnabled(true);
+                        }
+
                         orderDM = assignedOrderDM;
-                        currentLocationMarker = updateMarker(
-                                currentLocationMarker,
+                        clientLocationMarker = updateMarker(
+                                clientLocationMarker,
                                 new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
                                 assignedOrderDM.orderAddress);
                         if (!assignedOrderDM.destinationAddress.isEmpty()) {
@@ -199,10 +210,6 @@ public class OrderMap extends FragmentActivity {
                                     assignedOrderDM.destinationAddress);
                         }
 
-                        if (orderDM.taxiId == -1) {
-                            // No taxi assigned yet
-
-                        }
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
                     }
@@ -211,6 +218,12 @@ public class OrderMap extends FragmentActivity {
                 if (status == HttpStatus.SC_NOT_FOUND) {
                     // Clear stored order id
                     clearStoredOrder();
+                    Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
+
+                    // Go to order assignment activity
+                    Intent intent = new Intent(context, OrderAssignmentActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
                 }
 
             }
@@ -218,16 +231,15 @@ public class OrderMap extends FragmentActivity {
             @Override
             public void failure(RetrofitError error) {
                 // Clear stored order id
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                 clearStoredOrder();
             }
         });
     }
 
     private void clearStoredOrder() {
-        UserPreferencesManager.storeOrderId(-1, context);
+        UserPreferencesManager.clearOrderAssignment(context);
         orderDM = null;
-        orderButton.setText(getResources().getString(R.string.confirm_order_txt));
-        orderButton.setEnabled(true);
     }
 
 
@@ -289,52 +301,83 @@ public class OrderMap extends FragmentActivity {
     private void initInputs() {
 
 
-        orderButton = (Button)findViewById(R.id.btn_cancel_order);
-        orderButton.setEnabled(false);
+        cancelOrderButton = (Button)findViewById(R.id.btn_cancel_order);
+        cancelOrderButton.setEnabled(false);
+        placeOrderButton = (Button)findViewById(R.id.btn_place_order);
+        placeOrderButton.setEnabled(false);
 
-        // Place Order and get it with the order's id
-        orderButton.setOnClickListener(new View.OnClickListener() {
+        boolean isInClientOrder = UserPreferencesManager.hasAssignedOrder(context);
+        if(isInClientOrder) {
+            cancelOrderButton.setVisibility(View.VISIBLE);
+            placeOrderButton.setVisibility(View.INVISIBLE);
+        }
+
+        // Cancel order if possible
+        cancelOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                orderButton.setEnabled(false);
+                cancelOrderButton.setEnabled(false);
+                showProgress(true);
+                int currentOrderId = UserPreferencesManager.getLastOrderId(context);
+                // Order in progress, try to cancel it
+                RestClientManager.cancelOrder(currentOrderId, context, new Callback<OrderDM>() {
+                    @Override
+                    public void success(OrderDM clientOrderDM, Response response) {
+                        showProgress(false);
+                        int status = response.getStatus();
+                        clearStoredOrder();
+                        if (status == HttpStatus.SC_OK) {
+                            // Cancelled successfully
+                            Toast.makeText(context, getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        if (status == HttpStatus.SC_BAD_REQUEST) {
+                            // Cancelled or finished already
+                            Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        Toast.makeText(context, getResources().getString(R.string.last_order_not_found_toast), Toast.LENGTH_LONG).show();
+
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        showProgress(false);
+                        cancelOrderButton.setText(getResources().getString(R.string.cancel_order_txt));
+                        cancelOrderButton.setEnabled(true);
+                    }
+                });
+
                 if (!trackingEnabled) {
                     // Stop location service
                     Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
                     context.stopService(stopLocationServiceIntent);
                 }
 
+            }
+        });
+
+        placeOrderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                placeOrderButton.setEnabled(false);
                 showProgress(true);
+                if(taxiDriverLocation != null) {
 
-                int currentOrderId = UserPreferencesManager.getLastOrderId(context);
-                if (currentOrderId != -1) {
-                    // Order in progress, try to cancel it
-                    RestClientManager.cancelOrder(currentOrderId, context, new Callback<OrderDM>() {
+                    OrderDetailsDM driverOrder = new OrderDetailsDM();
+                    driverOrder.orderLatitude = taxiDriverLocation.getLatitude();
+                    driverOrder.orderLongitude = taxiDriverLocation.getLongitude();
+                    RestClientManager.addOrder(driverOrder, context, new Callback<OrderDetailsDM>() {
                         @Override
-                        public void success(OrderDM clientOrderDM, Response response) {
-                            showProgress(false);
-                            int status = response.getStatus();
-                            clearStoredOrder();
-                            if (status == HttpStatus.SC_OK) {
-                                // Cancelled successfully
-                                Toast.makeText(context, getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
-                            if (status == HttpStatus.SC_BAD_REQUEST) {
-                                // Cancelled or finished already
-                                Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
-                            Toast.makeText(context, getResources().getString(R.string.last_order_not_found_toast), Toast.LENGTH_LONG).show();
-
+                        public void success(OrderDetailsDM orderDetailsDM, Response response) {
+                            // TODO: Finish
                         }
 
                         @Override
                         public void failure(RetrofitError error) {
-                            showProgress(false);
-                            orderButton.setText(getResources().getString(R.string.cancel_order_txt));
-                            orderButton.setEnabled(true);
+
                         }
                     });
                 }

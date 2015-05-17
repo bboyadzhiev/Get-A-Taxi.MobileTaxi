@@ -4,4 +4,6 @@
     tools:context="com.getataxi.mobiletaxi.OrderAssignmentActivity">
     <item android:id="@+id/action_unassign" android:title="@string/unassign_taxi_txt"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_exit" android:title="@string/exit"
+        android:orderInCategory="100" app:showAsAction="never" />
 </menu>

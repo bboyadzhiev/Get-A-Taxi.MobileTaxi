@@ -6,7 +6,6 @@
     <string name="positioning_unavailable_title">Positioning services unavailable!</string>
     <string name="positioning_unavailable_message">Change settings?</string>
 
-    <string name="please_register">Please register!</string>
-    <string name="please_login">Registration found, please login!</string>
+    <string name="please_login">Please login!</string>
     <string name="token_renew">Welcome back, %1$s</string>
 </resources>

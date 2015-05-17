@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="title_activity_order_map">Order Taxi</string>
+    <string name="title_activity_order_map">Client order</string>
 
     <string name="confirm_order_txt">Confirm and order!</string>
     <string name="cancel_order_txt">Cancel order!</string>
+    <string name="finish_order_txt">Finish order!</string>
 
     <string name="no_user_locations_toast">No stored locations found!</string>
     <string name="order_cancelled_toast">Order cancelled!</string>
     <string name="getting_details_txt">Getting details…</string>
-    <string name="last_order_not_found_toast">Last order was not found! Please order again!</string>
+    <string name="order_not_found">Order was not found!</string>
+    <string name="place_driver_order">Place custom order!</string>
 </resources>

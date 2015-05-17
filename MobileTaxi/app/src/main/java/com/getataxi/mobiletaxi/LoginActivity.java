@@ -181,8 +181,8 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
                             String welcome = String.format(res.getString(R.string.login_success_message),
                                     responseLoginUserDM.userName);
                             Toast.makeText(context, welcome, Toast.LENGTH_LONG).show();
-                            Thread.sleep(5000);
                             UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
+                            Thread.sleep(2000);
                             showProgress(false);
                             Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
                             // TODO: REVIEW

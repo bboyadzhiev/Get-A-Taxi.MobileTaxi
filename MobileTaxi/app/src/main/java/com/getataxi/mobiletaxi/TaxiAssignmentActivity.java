@@ -44,6 +44,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
     private TextView taxiPlateTxt;
 
     private View mProgressView;
+    private TextView mNoTaxies;
 
     TaxiesListAdapter taxiesListAdapter;
     Context context = this;
@@ -54,6 +55,8 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
         taxies = new ArrayList<>();
         mProgressView = findViewById(R.id.get_taxies_progress);
+        mNoTaxies = (TextView)findViewById(R.id.noTaxiesLabel);
+
         getDistrictTaxies();
         this.assignTaxiButton = (Button)this.findViewById(R.id.assignTaxiButton);
         assignTaxiButton.setEnabled(false);
@@ -90,6 +93,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
                 if (status == HttpStatus.SC_OK) {
                     selectedTaxi = taxiDetailsDM;
                     UserPreferencesManager.setAssignedTaxi(selectedTaxi, context);
+                    UserPreferencesManager.setDistrictId(selectedTaxi.districtId, context);
                     Toast.makeText(context, getResources().getText(R.string.taxi_assigned), Toast.LENGTH_LONG).show();
 
                     Intent intent = new Intent(context, OrderAssignmentActivity.class);
@@ -119,11 +123,18 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
             public void success(List<TaxiDetailsDM> taxiesDMs, Response response) {
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
+                    if (taxiesDMs.size() > 0) {
+                        mNoTaxies.setVisibility(View.VISIBLE);
+                    } else {
+                        mNoTaxies.setVisibility(View.INVISIBLE);
+                    }
+
                     taxies.clear();
                     taxies.addAll(taxiesDMs);
                 }
 
                 if (status == HttpStatus.SC_BAD_REQUEST) {
+                    mNoTaxies.setVisibility(View.INVISIBLE);
                     Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
                 }
 
@@ -138,6 +149,14 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
             }
         });
     }
+
+   public void logoutDriver(){
+       UserPreferencesManager.clearLoginData(context);
+       Intent intent = new Intent(context, LoginActivity.class);
+       intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+       startActivity(intent);
+
+   }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -154,10 +173,15 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_exit) {
+            finish();
             return true;
         }
 
+        if(id == R.id.action_logout){
+            logoutDriver();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

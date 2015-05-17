@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_activity_taxi_assignment">TaxiAssignmentActivity</string>
+
+    <string name="assign_taxi_txt">Assign taxi</string>
+    <string name="taxies_title">Available taxies</string>
+
+    <string name="taxi_assigned">Taxi assigned successfully!</string>
+    <string name="unassign_taxi_txt">Unassign taxi</string>
+
+    <string name="no_taxies">No taxies available!</string>
+
+    <string name="action_logout" >Logout</string>
+</resources>

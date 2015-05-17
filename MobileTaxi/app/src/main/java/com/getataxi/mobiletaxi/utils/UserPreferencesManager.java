@@ -25,7 +25,7 @@ import java.util.Locale;
  * Created by bvb on 31.3.2015 г..
  */
 public class UserPreferencesManager {
-    private static final String USER_LOGIN_INFO = "";
+    private static final String USER_LOGIN_INFO = "Driver";
 
 
     public static DateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
@@ -94,6 +94,14 @@ public class UserPreferencesManager {
         editor.commit();
     }
 
+    public static void clearLoginData(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit()
+                .remove(Constants.LOGIN_DATA)
+                .putBoolean(Constants.IS_LOGGED, false);
+        editor.commit();
+    }
+
     public static boolean checkForLoginCredentials(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String userData = userPrefs.getString(Constants.LOGIN_DATA, "");
@@ -108,6 +116,17 @@ public class UserPreferencesManager {
         return userPrefs.getBoolean(Constants.IS_LOGGED, false);
     }
 
+    public static void setDistrictId(int distritId, Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putInt(Constants.DISTRICT_ID, distritId);
+        editor.commit();
+    }
+
+    public static int getDistrictId(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getInt(Constants.DISTRICT_ID, -1);
+    }
 
 
     public static boolean checkForRegistration(Context context){
@@ -138,8 +157,8 @@ public class UserPreferencesManager {
 
 
     public static LoginUserDM getLoginData(Context context){
-        SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        String userData = userPref.getString(Constants.LOGIN_DATA, "");
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        String userData = userPrefs.getString(Constants.LOGIN_DATA, "");
        // Log.d("USER_DATA", userData);
         Gson gson = new Gson();
         LoginUserDM userInfo = gson.fromJson(userData, LoginUserDM.class);
@@ -147,8 +166,8 @@ public class UserPreferencesManager {
     }
 
     public static void logoutUser(Context context){
-        SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
-        SharedPreferences.Editor editor = userPref.edit();
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
         editor.putBoolean(Constants.IS_LOGGED, false);
         editor.commit();
     }
@@ -185,6 +204,18 @@ public class UserPreferencesManager {
     public static int getLastOrderId(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         return userPrefs.getInt(Constants.LAST_ORDER_ID, -1);
+    }
+
+    public static void clearOrderAssignment(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putInt(Constants.LAST_ORDER_ID, -1);
+        editor.commit();
+    }
+
+    public static boolean hasAssignedOrder(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getInt(Constants.LAST_ORDER_ID, -1) != -1;
     }
 
     // Assigned Taxi details

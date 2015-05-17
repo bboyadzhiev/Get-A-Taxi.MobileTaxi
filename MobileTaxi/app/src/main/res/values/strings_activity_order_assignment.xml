@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="orders_title">Available orders</string>
+    <string name="skip_assign_txt">Skip assignment</string>
+    <string name="assign_order_txt">Get order!</string>
+    <string name="no_orders">No orders available!</string>
+
+    <string name="no_taxi_assigned">No taxi assigned!</string>
+</resources>

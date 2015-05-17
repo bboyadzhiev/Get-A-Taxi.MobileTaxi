@@ -14,7 +14,7 @@ import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
 import java.util.List;
 
 /**
- * Created by bvb on 13.5.2015 ã..
+ * Created by bvb on 13.5.2015..
  */
 public class TaxiesListAdapter extends ArrayAdapter<TaxiDetailsDM> {
 

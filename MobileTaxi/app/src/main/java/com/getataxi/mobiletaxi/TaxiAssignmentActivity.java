@@ -37,7 +37,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
     List<TaxiDetailsDM> taxies;
     TaxiDetailsDM selectedTaxi;
-    private ListView ordersList;
+    private ListView taxiesListView;
     private Button assignTaxiButton;
 
     private TextView taxiIdTxt;
@@ -52,8 +52,8 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_taxi_assignment);
+        taxiesListView = (ListView) this.findViewById(R.id.taxies_list_view);
 
-        taxies = new ArrayList<>();
         mProgressView = findViewById(R.id.get_taxies_progress);
         mNoTaxies = (TextView)findViewById(R.id.noTaxiesLabel);
 
@@ -63,7 +63,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
         assignTaxiButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(selectedTaxi != null) {
+                if (selectedTaxi != null) {
                     TaxiDM taxi = new TaxiDM();
                     taxi.taxiId = selectedTaxi.taxiId;
                     taxi.latitude = selectedTaxi.latitude;
@@ -73,15 +73,19 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
             }
         });
 
-        ordersList = (ListView) this.findViewById(R.id.orders_list_view);
 
-        taxiesListAdapter = new TaxiesListAdapter(context,
-                R.layout.fragment_taxi_list_item, taxies);
 
-        ordersList.setAdapter(taxiesListAdapter);
-        ordersList.setOnItemClickListener(this);
+    }
 
-        getDistrictTaxies();
+    private void populateTaxiesList() {
+        if(!taxies.isEmpty()) {
+
+            taxiesListAdapter = new TaxiesListAdapter(context,
+                    R.layout.fragment_taxi_list_item, taxies);
+
+            taxiesListView.setAdapter(taxiesListAdapter);
+            taxiesListView.setOnItemClickListener(this);
+        }
     }
 
     private void assignTaxi(TaxiDM taxi) {
@@ -124,13 +128,15 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
                     if (taxiesDMs.size() > 0) {
-                        mNoTaxies.setVisibility(View.VISIBLE);
-                    } else {
                         mNoTaxies.setVisibility(View.INVISIBLE);
+                    } else {
+                        mNoTaxies.setVisibility(View.VISIBLE);
                     }
-
+                    Toast.makeText(context, "Taxies: "+taxiesDMs.size(), Toast.LENGTH_LONG).show();
+                    taxies = new ArrayList<>();
                     taxies.clear();
                     taxies.addAll(taxiesDMs);
+                    populateTaxiesList();
                 }
 
                 if (status == HttpStatus.SC_BAD_REQUEST) {
@@ -143,9 +149,8 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "R: "+error.getMessage(), Toast.LENGTH_LONG).show();
                 showProgress(false);
-                assignTaxiButton.setEnabled(true);
             }
         });
     }
@@ -173,12 +178,12 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_exit) {
+        if (id == R.id.action_taxi_exit) {
             finish();
             return true;
         }
 
-        if(id == R.id.action_logout){
+        if(id == R.id.action_taxi_logout){
             logoutDriver();
             return true;
         }

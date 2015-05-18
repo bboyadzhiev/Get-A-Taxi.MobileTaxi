@@ -11,4 +11,5 @@
     <string name="getting_details_txt">Getting details…</string>
     <string name="order_not_found">Order was not found!</string>
     <string name="place_driver_order">Place custom order!</string>
+    <string name="action_order_assignment_txt">Get orders list</string>
 </resources>

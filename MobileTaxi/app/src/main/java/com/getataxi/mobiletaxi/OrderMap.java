@@ -15,6 +15,8 @@ import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
@@ -42,23 +44,21 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.apache.http.HttpStatus;
 
+import java.util.Calendar;
+
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 
-public class OrderMap extends FragmentActivity {
+public class OrderMap extends FragmentActivity  {
     public static final String TAG = "ORDER_MAP";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
-    private String destinationDialogTag;
-    private String startDialogTag;
 
     private Context context;
     private  String phoneNumber;
 
-    // Addresses inputs
-    private AddressesInputsFragment locationsInputs;
 
     private View mProgressView;
 
@@ -79,7 +79,8 @@ public class OrderMap extends FragmentActivity {
 
     // Order details
     private OrderDetailsDM orderDM;
-
+    private boolean hasAssignedOrder = false;
+    private int assignedOrderId = -1;
 
     // TRACKING SERVICES
     protected void initiateTracking(int orderId){
@@ -198,14 +199,18 @@ public class OrderMap extends FragmentActivity {
     }
 
     private void getAssignedOrder(){
-        int lastOrderId = UserPreferencesManager.getLastOrderId(context);
-        if(lastOrderId == -1){
-            // No stored order id!
+//        int lastOrderId = UserPreferencesManager.getLastOrderId(context);
+//        if(lastOrderId == -1){
+//            // No stored order id!
+//            toggleButton(1);
+//            return;
+//        }
+        if(!hasAssignedOrder){
             toggleButton(1);
             return;
         }
         // Driver has taken an order in the district
-        RestClientManager.getOrder(lastOrderId, context, new Callback<OrderDetailsDM>() {
+        RestClientManager.getOrder(assignedOrderId, context, new Callback<OrderDetailsDM>() {
             @Override
             public void success(OrderDetailsDM assignedOrderDM, Response response) {
 
@@ -213,11 +218,11 @@ public class OrderMap extends FragmentActivity {
                 if (status == HttpStatus.SC_OK) {
                     try {
                         toggleButton(0);
-                        if(assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
+                        if (assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
                             toggleButton(0);
                         }
 
-                        if(!assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
+                        if (!assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
                             toggleButton(2);
                         }
 
@@ -261,6 +266,8 @@ public class OrderMap extends FragmentActivity {
 
     private void clearStoredOrder() {
         UserPreferencesManager.clearOrderAssignment(context);
+        hasAssignedOrder = false;
+        assignedOrderId = -1;
         if(clientLocationMarker != null){
             clientLocationMarker.remove();
         }
@@ -285,6 +292,11 @@ public class OrderMap extends FragmentActivity {
         setUpMapIfNeeded();
 
         //trackingEnabled = UserPreferencesManager.getTrackingState(context);
+
+        hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
+        if(hasAssignedOrder) {
+            assignedOrderId = UserPreferencesManager.getLastOrderId(context);
+        }
 
         // Start location service
         Intent locationService = new Intent(OrderMap.this, LocationService.class);
@@ -337,8 +349,7 @@ public class OrderMap extends FragmentActivity {
         finishOrderButton = (Button)findViewById(R.id.btn_finish_order);
         finishOrderButton.setEnabled(false);
 
-        boolean isInClientOrder = UserPreferencesManager.hasAssignedOrder(context);
-        if(isInClientOrder) {
+        if(hasAssignedOrder) {
             toggleButton(0);
         } else {
             toggleButton(1);
@@ -350,9 +361,9 @@ public class OrderMap extends FragmentActivity {
             public void onClick(View v) {
                 cancelOrderButton.setEnabled(false);
                 showProgress(true);
-                int currentOrderId = UserPreferencesManager.getLastOrderId(context);
+               // int currentOrderId = UserPreferencesManager.getLastOrderId(context);
                 // Order in progress, try to cancel it
-                RestClientManager.cancelOrder(currentOrderId, context, new Callback<OrderDM>() {
+                RestClientManager.cancelOrder(assignedOrderId, context, new Callback<OrderDM>() {
                     @Override
                     public void success(OrderDM clientOrderDM, Response response) {
 
@@ -404,11 +415,15 @@ public class OrderMap extends FragmentActivity {
                 if (taxiDriverLocation != null) {
 
                     OrderDetailsDM driverOrder = prepareDriverOrderDM();
+                    driverOrder.orderedAt = Calendar.getInstance().getTime();
+                    driverOrder.pickupTime = Calendar.getInstance().getTime();
                     RestClientManager.addOrder(driverOrder, context, new Callback<OrderDetailsDM>() {
                         @Override
                         public void success(OrderDetailsDM orderDetailsDM, Response response) {
                             // TODO: Finish
                             UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
+                            assignedOrderId = orderDetailsDM.orderId;
+                            hasAssignedOrder = true;
                             showProgress(false);
                             toggleButton(2);
 
@@ -435,12 +450,12 @@ public class OrderMap extends FragmentActivity {
                     OrderDetailsDM finishedOrder = prepareDriverOrderDM();
                     finishedOrder.isWaiting = false;
                     finishedOrder.isFinished = true;
-                    // TODO: add additional data
+                    // TODO: add additional data like bill or time
 
                     RestClientManager.updateOrder(finishedOrder, context, new Callback<OrderDetailsDM>() {
                         @Override
                         public void success(OrderDetailsDM orderDetailsDM, Response response) {
-                            UserPreferencesManager.clearOrderAssignment(context);
+                            clearStoredOrder();
                             toggleButton(1);
                             showProgress(false);
                         }
@@ -459,6 +474,7 @@ public class OrderMap extends FragmentActivity {
 
     private OrderDetailsDM prepareDriverOrderDM() {
         OrderDetailsDM driverOrder = new OrderDetailsDM();
+        driverOrder.orderId = assignedOrderId; //UserPreferencesManager.getLastOrderId(context);
         driverOrder.orderLatitude = taxiDriverLocation.getLatitude();
         driverOrder.orderLongitude = taxiDriverLocation.getLongitude();
         driverOrder.isWaiting = false;
@@ -470,6 +486,62 @@ public class OrderMap extends FragmentActivity {
         return driverOrder;
     }
 
+    // OPTIONS MENU
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_order_map, menu);
+        menu.findItem(R.id.action_order_assignment).setEnabled(hasAssignedOrder);
+        menu.findItem(R.id.action_release_taxi).setEnabled(hasAssignedOrder);
+        return true;
+    }
+
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if(id == R.id.action_order_assignment && !hasAssignedOrder){
+            Intent intent = new Intent(context, OrderAssignmentActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return true;
+        }
+
+        if(id == R.id.action_release_taxi && !hasAssignedOrder){
+            showProgress(true);
+            int assignedTaxiId = UserPreferencesManager.getAssignedTaxi(context).taxiId;
+            RestClientManager.unassignTaxi(assignedTaxiId, context, new Callback() {
+
+                @Override
+                public void success(Object o, Response response) {
+                    UserPreferencesManager.clearAssignedTaxi(context);
+                    Intent taxiAssignmentActivity = new Intent(context, TaxiAssignmentActivity.class);
+                    taxiAssignmentActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    showProgress(false);
+                    startActivity(taxiAssignmentActivity);
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    showProgress(false);
+                }
+            });
+
+            return true;
+        }
+
+        if (id == R.id.action_order_map_exit) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
 
 

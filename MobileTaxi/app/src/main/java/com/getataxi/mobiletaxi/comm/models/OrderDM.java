@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 
 import org.parceler.Parcel;
 
+import java.util.Date;
+
 /**
  * Created by bvb on 31.3.2015 г..
  */
@@ -33,4 +35,7 @@ public class OrderDM {
 
     @SerializedName("custComment")
     public String userComment;
+
+    @SerializedName("pickupTime")
+    public Date pickupTime;
 }

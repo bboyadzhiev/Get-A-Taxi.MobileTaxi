@@ -19,6 +19,8 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="in_order_assignment">You are still in active order!</string>
+    <string name="action_taxi_un_assignment_txt">Release taxi!</string>
+    <string name="action_release_taxi_txt">Release taxi!</string>
 
 
 </resources>

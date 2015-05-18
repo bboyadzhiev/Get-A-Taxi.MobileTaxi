@@ -38,7 +38,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         AdapterView.OnItemClickListener {
 
     private ArrayList<OrderDM> orders;
-    private ListView ordersList;
+    private ListView ordersListView;
     private Button assignButton;
     private Button skipAssignmentButton;
 
@@ -59,7 +59,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_assignment);
-
+        ordersListView = (ListView) this.findViewById(R.id.orders_list_view);
         assignedTaxi = UserPreferencesManager.getAssignedTaxi(context);
 
         if(UserPreferencesManager.hasAssignedOrder(context)){
@@ -87,22 +87,28 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         skipAssignmentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            //TODO REVIEW!
-            Intent orderMap = new Intent(context, OrderMap.class);
-            orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(orderMap);
+                //TODO REVIEW!
+                Intent orderMap = new Intent(context, OrderMap.class);
+                orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(orderMap);
             }
         });
 
-        ordersList = (ListView) this.findViewById(R.id.orders_list_view);
 
-        ordersListAdapter = new ClientOrdersListAdapter(context,
-                R.layout.fragment_order_list_item, orders);
-
-        ordersList.setAdapter(ordersListAdapter);
-        ordersList.setOnItemClickListener(this);
 
         getDistrictOrders();
+    }
+
+    private void populateOrdersListView() {
+        if(!orders.isEmpty()) {
+            ordersListView = (ListView) this.findViewById(R.id.orders_list_view);
+
+            ordersListAdapter = new ClientOrdersListAdapter(context,
+                    R.layout.fragment_order_list_item, orders);
+
+            ordersListView.setAdapter(ordersListAdapter);
+            ordersListView.setOnItemClickListener(this);
+        }
     }
 
     private void getDistrictOrders() {
@@ -113,14 +119,14 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
                     if(orderDMs.size() > 0){
-                        mNoOrdersTxt.setVisibility(View.VISIBLE);
-                    } else  {
                         mNoOrdersTxt.setVisibility(View.INVISIBLE);
+                    } else  {
+                        mNoOrdersTxt.setVisibility(View.VISIBLE);
                     }
 
                     orders.clear();
                     orders.addAll(orderDMs);
-
+                    populateOrdersListView();
                 }
 
                 if (status == HttpStatus.SC_BAD_REQUEST) {
@@ -208,7 +214,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_unassign) {
+        if (id == R.id.action_order_unassign_taxi) {
             showProgress(true);
             if (UserPreferencesManager.getLastOrderId(context) != -1) {
                 return true;
@@ -235,7 +241,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             return true;
         }
 
-        if (id == R.id.action_exit) {
+        if (id == R.id.action_order_assignment_exit) {
             finish();
             return true;
         }

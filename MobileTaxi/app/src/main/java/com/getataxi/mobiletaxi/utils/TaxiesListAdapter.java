@@ -53,7 +53,7 @@ public class TaxiesListAdapter extends ArrayAdapter<TaxiDetailsDM> {
             holder = (ViewHolderItem) convertView.getTag();
         }
 
-        holder.taxiId.setText(this.taxies.get(position).taxiId);
+        holder.taxiId.setText(" "+this.taxies.get(position).taxiId);
         holder.taxiPlate.setText(this.taxies.get(position).plate);
 
 

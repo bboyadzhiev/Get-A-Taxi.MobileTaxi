@@ -12,22 +12,25 @@
         tools:context="com.getataxi.mobiletaxi.TaxiAssignmentActivity">
 
         <!-- Progress Bar -->
-        <ProgressBar
-            android:id="@+id/get_taxies_progress"
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:visibility="gone" />
+
         <fragment
             android:id="@+id/taxiesListFragment"
             android:name="com.getataxi.mobiletaxi.fragments.TaxiesListFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:layout="@layout/fragment_texies_list"
-            android:layout_above="@+id/taxiDetailsFragment" />
+            android:layout_above="@+id/taxiDetailsFragment"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="false" />
+        <ProgressBar
+            android:id="@+id/get_taxies_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:visibility="gone" />
         <fragment
             android:id="@+id/taxiDetailsFragment"
             android:name="com.getataxi.mobiletaxi.fragments.TaxiDetailsFragment"

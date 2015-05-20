@@ -141,7 +141,8 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
                 if (status == HttpStatus.SC_BAD_REQUEST) {
                     mNoTaxies.setVisibility(View.INVISIBLE);
-                    Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                   // Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, response.getReason(), Toast.LENGTH_LONG).show();
                 }
 
                 showProgress(false);

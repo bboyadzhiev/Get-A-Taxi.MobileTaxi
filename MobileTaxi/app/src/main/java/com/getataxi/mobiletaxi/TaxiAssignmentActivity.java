@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +32,7 @@ import java.util.List;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 public class TaxiAssignmentActivity extends ActionBarActivity  implements
         AdapterView.OnItemClickListener {
@@ -150,7 +152,8 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(context, "R: "+error.getMessage(), Toast.LENGTH_LONG).show();
+                String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+                Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
                 showProgress(false);
             }
         });

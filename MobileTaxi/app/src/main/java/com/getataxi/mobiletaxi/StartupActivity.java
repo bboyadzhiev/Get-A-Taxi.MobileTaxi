@@ -84,7 +84,7 @@ public class StartupActivity extends Activity {
         if(UserPreferencesManager.checkForLoginCredentials(context)){
             LoginUserDM loginUserDM = UserPreferencesManager.getLoginData(context);
             // Check if still logged-in
-            if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM)){
+            if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM.expires)){
 
                 if(UserPreferencesManager.hasAssignedTaxi(context)){
                     Intent orderMap = new Intent(context, OrderAssignmentActivity.class);

@@ -10,7 +10,6 @@
         android:id="@+id/orderAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:text="Order Address"
         android:textSize="20sp" />
 
@@ -18,7 +17,6 @@
         android:id="@+id/orderDestination"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:text="Order Destination"
         android:textSize="15sp" />
 
@@ -26,7 +24,6 @@
         android:id="@+id/clientComment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:text="Client Comment"
         android:textSize="15sp" />
 

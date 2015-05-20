@@ -47,14 +47,14 @@ public class UserPreferencesManager {
      * Checks if token has expired.
      * @return true if token has expired
      */
-    public static boolean tokenHasExpired(LoginUserDM loginData) {
-        if(loginData == null){
+    public static boolean tokenHasExpired(String expires) {
+        if(expires == null || expires.isEmpty()){
             return true;
         }
         Date tokenExpirationDate = null;
         Date now =  new Date();
         try {
-            tokenExpirationDate = GetDate(loginData.expires);
+            tokenExpirationDate = GetDate(expires);
             //now = tokenDateFormat.parse(tokenDateFormat.format(GetDate(null)));
 
         } catch (ParseException e) {

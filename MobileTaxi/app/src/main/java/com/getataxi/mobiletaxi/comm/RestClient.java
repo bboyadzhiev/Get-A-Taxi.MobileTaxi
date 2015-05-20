@@ -93,10 +93,14 @@ public class RestClient{
         return taxiStandsService;
     }
 
-    public TaxiAPI getTaxiService(List<NameValuePair> headers){
-        this.headers.clear();
-        if (headers != null) {
-            this.headers = headers;
+    public TaxiAPI getTaxiService(List<NameValuePair> heads){
+        if (this.headers != null) {
+            this.headers.clear();
+            this.headers = heads;
+        } else {
+            this.headers.clear();
+            this.headers = new ArrayList<NameValuePair>();
+            this.headers.addAll(heads);
         }
         return taxiService;
     }

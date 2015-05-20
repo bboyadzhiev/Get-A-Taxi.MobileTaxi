@@ -44,18 +44,20 @@ public class RestClientManager {
 
     private static List<NameValuePair> getAuthorisationHeaders(Context context){
         LoginUserDM loginData = UserPreferencesManager.getLoginData(context);
-        headers.clear();
+        List<NameValuePair> heads = new ArrayList<NameValuePair>();
+        heads.add(new BasicNameValuePair("Authorization", "Bearer " + loginData.accessToken));
+       //headers.clear();
        // if (headers.isEmpty()){
-            headers.add(new BasicNameValuePair("Authorization", "Bearer " + loginData.accessToken));
+        //    headers.add(new BasicNameValuePair("Authorization", "Bearer " + loginData.accessToken));
         //}
         if (UserPreferencesManager.tokenHasExpired(loginData)){
             updateToken(loginData, "password", context);
         }
         Log.d("RESTMANAGER: ", "HEADERS");
-        for (NameValuePair header : headers) {
+        for (NameValuePair header : heads) {
             Log.d(header.getName()+" : ", header.getValue());
         }
-        return headers;
+        return heads;
     }
 
 

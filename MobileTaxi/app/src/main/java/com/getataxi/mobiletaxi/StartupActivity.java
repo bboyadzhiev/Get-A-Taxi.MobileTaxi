@@ -90,10 +90,11 @@ public class StartupActivity extends Activity {
                     Intent orderMap = new Intent(context, OrderAssignmentActivity.class);
                     orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(orderMap);
+                } else {
+                    Intent orderMap = new Intent(context, TaxiAssignmentActivity.class);
+                    orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(orderMap);
                 }
-                Intent orderMap = new Intent(context, TaxiAssignmentActivity.class);
-                orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(orderMap);
 
             }else{
                 String grantType = "password";

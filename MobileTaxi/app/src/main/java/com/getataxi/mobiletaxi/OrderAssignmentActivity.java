@@ -17,7 +17,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.getataxi.mobiletaxi.R;
 import com.getataxi.mobiletaxi.comm.RestClientManager;
 import com.getataxi.mobiletaxi.comm.models.OrderDM;
 import com.getataxi.mobiletaxi.comm.models.OrderDetailsDM;
@@ -89,12 +88,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             public void onClick(View v) {
                 //TODO REVIEW!
                 Intent orderMap = new Intent(context, OrderMap.class);
-                orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(orderMap);
             }
         });
-
-
 
         getDistrictOrders();
     }
@@ -176,7 +173,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
 
                     Intent orderMap = new Intent(context, OrderMap.class);
-                    orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    showProgress(false);
                     context.startActivity(orderMap);
                 }
 
@@ -216,19 +214,31 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_order_unassign_taxi) {
             showProgress(true);
-            if (UserPreferencesManager.getLastOrderId(context) != -1) {
+            if (UserPreferencesManager.hasAssignedOrder(context)) {
                 return true;
             }
 
             RestClientManager.unassignTaxi(assignedTaxi.taxiId, context, new Callback() {
                 @Override
                 public void success(Object o, Response response) {
-                    UserPreferencesManager.clearAssignedTaxi(context);
+                    int status = response.getStatus();
+                    if (status == HttpStatus.SC_OK) {
+                        UserPreferencesManager.clearAssignedTaxi(context);
 
-                    Intent taxiAssignmentActivity = new Intent(context, TaxiAssignmentActivity.class);
-                    taxiAssignmentActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        Intent taxiAssignmentActivity = new Intent(context, TaxiAssignmentActivity.class);
+                        taxiAssignmentActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        showProgress(false);
+                        startActivity(taxiAssignmentActivity);
+                    }
+                    if (status == HttpStatus.SC_BAD_REQUEST) {
+                        Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    }
+
+                    if (status == HttpStatus.SC_NOT_FOUND) {
+                        Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    }
+
                     showProgress(false);
-                    startActivity(taxiAssignmentActivity);
                 }
 
                 @Override

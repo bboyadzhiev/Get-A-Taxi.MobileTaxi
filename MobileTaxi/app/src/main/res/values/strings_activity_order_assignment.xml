@@ -6,4 +6,11 @@
     <string name="no_orders">No orders available!</string>
 
     <string name="no_taxi_assigned">No taxi assigned!</string>
+
+    <string name="order_from_txt">From:</string>
+    <string name="order_to_txt">To:</string>
+    <string name="order_to_not_specified">not specified&#8230;</string>
+    <string name="client_comment_txt">Comment:</string>
+    <string name="order_details_txt">Client order details</string>
+    <string name="no_comment">- no comment -</string>
 </resources>

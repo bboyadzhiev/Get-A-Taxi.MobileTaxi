@@ -52,7 +52,6 @@ import retrofit.client.Response;
 
 
 public class OrderMap extends FragmentActivity  {
-    public static final String TAG = "ORDER_MAP";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
 
@@ -205,10 +204,13 @@ public class OrderMap extends FragmentActivity  {
 //            toggleButton(1);
 //            return;
 //        }
+
         if(!hasAssignedOrder){
             toggleButton(1);
             return;
         }
+
+        showProgress(true);
         // Driver has taken an order in the district
         RestClientManager.getOrder(assignedOrderId, context, new Callback<OrderDetailsDM>() {
             @Override
@@ -216,15 +218,9 @@ public class OrderMap extends FragmentActivity  {
 
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
+                    showProgress(false);
                     try {
-                        toggleButton(0);
-                        if (assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
-                            toggleButton(0);
-                        }
-
-                        if (!assignedOrderDM.isWaiting && !assignedOrderDM.isFinished) {
-                            toggleButton(2);
-                        }
+                        if (orderNotActive(assignedOrderDM)) return;
 
                         orderDM = assignedOrderDM;
                         clientLocationMarker = updateMarker(
@@ -240,28 +236,48 @@ public class OrderMap extends FragmentActivity  {
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
                     }
-                }
-
-                if (status == HttpStatus.SC_NOT_FOUND) {
-                    // Clear stored order id
-                    clearStoredOrder();
-                    Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
-
-                    // Go to order assignment activity
-                    Intent intent = new Intent(context, OrderAssignmentActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
+                    showProgress(false);
                 }
 
             }
 
             @Override
             public void failure(RetrofitError error) {
-                // Clear stored order id
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                clearStoredOrder();
+                int status = error.getResponse().getStatus();
+                if(status == HttpStatus.SC_NOT_FOUND){
+                    // Clear stored order id
+                    Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
+                    clearStoredOrder();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+                showProgress(false);
             }
         });
+    }
+
+    private boolean orderNotActive(OrderDetailsDM assignedOrderDM) {
+        if(assignedOrderDM.isWaiting){
+            if(assignedOrderDM.isFinished){
+                // cancelled already
+                clearStoredOrder();
+                toggleButton(1); // "Place custom order"
+                return true;
+            } else{
+                toggleButton(0); // "Cancel order"
+            }
+
+        }else {
+            if(assignedOrderDM.isFinished){
+                // finished already
+                clearStoredOrder();
+                toggleButton(1); // "Place custom order"
+                return true;
+            } else{
+                toggleButton(2); // "Finish order"
+            }
+        }
+        return false;
     }
 
     private void clearStoredOrder() {
@@ -385,16 +401,21 @@ public class OrderMap extends FragmentActivity  {
                             return;
                         }
 
-                        Toast.makeText(context, getResources().getString(R.string.order_not_found), Toast.LENGTH_LONG).show();
                         showProgress(false);
                     }
 
                     @Override
                     public void failure(RetrofitError error) {
+                        int status = error.getResponse().getStatus();
+                        if(status == HttpStatus.SC_NOT_FOUND){
+                            // Clear stored order id
+                            Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
+                            clearStoredOrder();
+                            toggleButton(1);
+                        } else {
+                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                        }
                         showProgress(false);
-                        cancelOrderButton.setText(getResources().getString(R.string.cancel_order_txt));
-                        cancelOrderButton.setEnabled(true);
-                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
 
@@ -421,19 +442,22 @@ public class OrderMap extends FragmentActivity  {
                         @Override
                         public void success(OrderDetailsDM orderDetailsDM, Response response) {
                             // TODO: Finish
-                            UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
-                            assignedOrderId = orderDetailsDM.orderId;
-                            hasAssignedOrder = true;
+                            int status = response.getStatus();
+                            if(status == HttpStatus.SC_OK){
+                                orderDM = orderDetailsDM;
+                                UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
+                                assignedOrderId = orderDetailsDM.orderId;
+                                hasAssignedOrder = true;
+                                toggleButton(2);
+                            }
                             showProgress(false);
-                            toggleButton(2);
-
                         }
 
                         @Override
                         public void failure(RetrofitError error) {
                             showProgress(false);
-                            toggleButton(1);
                             Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                            toggleButton(1);
                         }
                     });
                 }
@@ -455,8 +479,11 @@ public class OrderMap extends FragmentActivity  {
                     RestClientManager.updateOrder(finishedOrder, context, new Callback<OrderDetailsDM>() {
                         @Override
                         public void success(OrderDetailsDM orderDetailsDM, Response response) {
-                            clearStoredOrder();
-                            toggleButton(1);
+                            int status = response.getStatus();
+                            if(status == HttpStatus.SC_OK){
+                                clearStoredOrder();
+                                toggleButton(1);
+                            }
                             showProgress(false);
                         }
 
@@ -464,6 +491,7 @@ public class OrderMap extends FragmentActivity  {
                         public void failure(RetrofitError error) {
                             showProgress(false);
                             Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                            toggleButton(1);
                         }
                     });
                 }

@@ -43,7 +43,7 @@ public class SignalRTrackingService extends Service {
         filter.addAction(Constants.LOCATION_UPDATED);
         registerReceiver(locationReceiver, filter);
 
-        broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
+
     }
 
     @Override
@@ -58,7 +58,7 @@ public class SignalRTrackingService extends Service {
             return -1;
         }
 
-        String server = Constants.BASE_URL + Constants.HUB_ENDPOINT;
+        String server =  RestClientManager.base_url + Constants.HUB_ENDPOINT;
 
         Logger l  = new Logger() {
             @Override
@@ -95,6 +95,7 @@ public class SignalRTrackingService extends Service {
                 Location loc = new Location("void");
                 loc.setLatitude(lat);
                 loc.setLongitude(lon);
+                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
                 broadcastIntent.putExtra(Constants.LOCATION, loc);
                 sendBroadcast(broadcastIntent);
             }

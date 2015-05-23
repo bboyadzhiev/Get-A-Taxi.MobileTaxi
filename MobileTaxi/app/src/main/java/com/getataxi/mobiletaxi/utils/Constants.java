@@ -9,8 +9,10 @@ public final class Constants {
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
 
     // COMMUNICATIONS
-    //public static final String BASE_URL = "http://get-a-taxi.apphb.com";
-    public static final String BASE_URL = "http://192.168.50.103:14938";
+    //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
+    public static final String DEFAULT_URL = "http://192.168.50.103:14938";
+    public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
+
     public static final String HUB_ENDPOINT = "/signalr";
     public static final String HUB_PROXY = "trackingHub";
     public static final String HUB_CONNECT = "Open";

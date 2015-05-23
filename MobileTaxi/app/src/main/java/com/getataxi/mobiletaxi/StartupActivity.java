@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.getataxi.mobiletaxi.comm.RestClient;
 import com.getataxi.mobiletaxi.comm.RestClientManager;
 import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.utils.DeviceState;
@@ -57,7 +58,7 @@ public class StartupActivity extends Activity {
                     context
             );
         }
-
+        RestClientManager.client = new RestClient(UserPreferencesManager.getBaseUrl(context));
 
         if(devicesReady) {
             proceedWithStartup();

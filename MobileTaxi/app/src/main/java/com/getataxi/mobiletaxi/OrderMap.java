@@ -113,7 +113,7 @@ public class OrderMap extends FragmentActivity  {
                 taxiLocationMarker = updateMarker(
                         taxiLocationMarker,
                         latLng,
-                        markerTitle
+                        markerTitle, false
                 );
                 taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi));
 
@@ -142,7 +142,8 @@ public class OrderMap extends FragmentActivity  {
                 clientLocationMarker = updateMarker(
                         clientLocationMarker,
                         latLng,
-                        markerTitle
+                        markerTitle,
+                        true
                 );
                 clientLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.person));
             }
@@ -168,9 +169,76 @@ public class OrderMap extends FragmentActivity  {
 
         setUpMapIfNeeded();
 
-        getAssignedOrder();
+
 
     }
+
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setUpMapIfNeeded();
+
+        hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
+        if(hasAssignedOrder) {
+            assignedOrderId = UserPreferencesManager.getLastOrderId(context);
+            getAssignedOrder();
+        }
+
+        if(hasAssignedOrder) {
+            toggleButton(0);
+        } else {
+            toggleButton(1);
+        }
+
+        // Start location service
+        Intent locationService = new Intent(OrderMap.this, LocationService.class);
+
+        locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
+        context.startService(locationService);
+
+        IntentFilter filter = new IntentFilter();
+        // Register for Location Service broadcasts
+        filter.addAction(Constants.LOCATION_UPDATED);
+        // And peer location change
+        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED);
+        registerReceiver(locationReceiver, filter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //Stop location service
+        Intent locationService = new Intent(OrderMap.this, LocationService.class);
+        stopService(locationService);
+
+        // Stop tracking service
+        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
+        stopService(trackingService);
+
+        unregisterReceiver(locationReceiver);
+
+    }
+
+
+    @Override
+    public void onStop(){
+        super.onStop();
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //unregisterReceiver(locationReceiver);
+    }
+
 
     private void toggleButton(int button){
         if(button == 0){ // Cancel Order
@@ -226,11 +294,13 @@ public class OrderMap extends FragmentActivity  {
                         clientLocationMarker = updateMarker(
                                 clientLocationMarker,
                                 new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
-                                assignedOrderDM.orderAddress);
+                                assignedOrderDM.orderAddress, true);
                         if (!assignedOrderDM.destinationAddress.isEmpty()) {
                             destinationLocationMarker = updateMarker(destinationLocationMarker,
                                     new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
-                                    assignedOrderDM.destinationAddress);
+                                    assignedOrderDM.destinationAddress, false
+
+                            );
                         }
 
                     } catch (IllegalStateException e) {
@@ -244,7 +314,7 @@ public class OrderMap extends FragmentActivity  {
             @Override
             public void failure(RetrofitError error) {
                 int status = error.getResponse().getStatus();
-                if(status == HttpStatus.SC_NOT_FOUND){
+                if (status == HttpStatus.SC_NOT_FOUND) {
                     // Clear stored order id
                     Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
                     clearStoredOrder();
@@ -296,66 +366,6 @@ public class OrderMap extends FragmentActivity  {
     }
 
 
-    @Override
-    protected void onStart(){
-        super.onStart();
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        setUpMapIfNeeded();
-
-        //trackingEnabled = UserPreferencesManager.getTrackingState(context);
-
-        hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
-        if(hasAssignedOrder) {
-            assignedOrderId = UserPreferencesManager.getLastOrderId(context);
-        }
-
-        // Start location service
-        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-
-        locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
-        context.startService(locationService);
-
-        IntentFilter filter = new IntentFilter();
-        // Register for Location Service broadcasts
-        filter.addAction(Constants.LOCATION_UPDATED);
-        // And peer location change
-        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED);
-        registerReceiver(locationReceiver, filter);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        //Stop location service
-        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-        stopService(locationService);
-
-        // Stop tracking service
-        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
-        stopService(trackingService);
-
-        unregisterReceiver(locationReceiver);
-
-    }
-
-
-    @Override
-    public void onStop(){
-        super.onStop();
-
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        //unregisterReceiver(locationReceiver);
-    }
-
     private void initInputs() {
         cancelOrderButton = (Button)findViewById(R.id.btn_cancel_order);
         cancelOrderButton.setEnabled(false);
@@ -365,11 +375,7 @@ public class OrderMap extends FragmentActivity  {
         finishOrderButton = (Button)findViewById(R.id.btn_finish_order);
         finishOrderButton.setEnabled(false);
 
-        if(hasAssignedOrder) {
-            toggleButton(0);
-        } else {
-            toggleButton(1);
-        }
+
 
         // Cancel order if possible
         cancelOrderButton.setOnClickListener(new View.OnClickListener() {
@@ -543,7 +549,7 @@ public class OrderMap extends FragmentActivity  {
         if(id == R.id.action_release_taxi && !hasAssignedOrder){
             showProgress(true);
             int assignedTaxiId = UserPreferencesManager.getAssignedTaxi(context).taxiId;
-            RestClientManager.unassignTaxi(assignedTaxiId, context, new Callback() {
+            RestClientManager.unassignTaxi(assignedTaxiId, context, new Callback<Object>() {
 
                 @Override
                 public void success(Object o, Response response) {
@@ -664,17 +670,19 @@ public class OrderMap extends FragmentActivity  {
         });
     }
 
-    private Marker updateMarker(Marker marker, LatLng location, String title ){
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
+    private Marker updateMarker(Marker marker, LatLng location, String title, boolean animate ){
+        if(animate) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
 
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(location)      // Sets the center of the map to location user
-                .zoom(17)                   // Sets the zoom
-                        //   .bearing(90)   // Sets the orientation of the camera to east
-                        //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
-                .build();                   // Creates a CameraPosition from the builder
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(location)      // Sets the center of the map to location user
+                    .zoom(17)                   // Sets the zoom
+                            //   .bearing(90)   // Sets the orientation of the camera to east
+                            //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
+                    .build();                   // Creates a CameraPosition from the builder
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
         if (marker == null){
 
             MarkerOptions markerOpts = new MarkerOptions()

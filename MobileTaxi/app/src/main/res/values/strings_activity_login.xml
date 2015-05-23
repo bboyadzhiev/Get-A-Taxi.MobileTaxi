@@ -14,4 +14,6 @@
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
+    <string name="enter_base_url">Enter base server address ...</string>
+    <string name="dialog_base_url_title">Base server address</string>
 </resources>

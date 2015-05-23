@@ -34,9 +34,10 @@ import retrofit.mime.TypedByteArray;
  * Created by bvb on 1.4.2015 г..
  */
 public class RestClientManager {
-    private static final String User_Info_File = "GetATaxiClient";
+    private static final String User_Info_File = "GetATaxiDriver";
 
-    private static RestClient client = new RestClient(Constants.BASE_URL);
+    public static String base_url = Constants.DEFAULT_URL;
+    public static RestClient client = new RestClient(base_url);
     private static List<NameValuePair> headers = new ArrayList<NameValuePair>();
 
     public RestClientManager(){
@@ -99,7 +100,7 @@ public class RestClientManager {
         client.getAccountService(null).login(loginUserDM.email, loginUserDM.password, grantType,callback);
     }
 
-    public static void register(final RegisterUserDM registerUserDM, Callback callback){
+    public static void register(final RegisterUserDM registerUserDM, Callback<String> callback){
         client.getAccountService(null).register(registerUserDM, callback);
     }
 
@@ -114,7 +115,7 @@ public class RestClientManager {
         client.getTaxiStandsService(getAuthorisationHeaders(context)).getTaxiStand(taxiStandId, callback);
     }
 
-    public static void getTaxiStandsPage(int page, Context context, Callback callback){
+    public static void getTaxiStandsPage(int page, Context context, Callback<List<TaxiStandDM>> callback){
         List<NameValuePair> heads = getAuthorisationHeaders(context);
         client.getTaxiStandsService(heads).getTaxiStandsPage(page, callback);
     }

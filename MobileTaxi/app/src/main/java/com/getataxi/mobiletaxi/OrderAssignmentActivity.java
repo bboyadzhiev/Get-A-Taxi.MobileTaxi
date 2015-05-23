@@ -69,19 +69,22 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
         assignedTaxi = UserPreferencesManager.getAssignedTaxi(context);
 
+        orders = new ArrayList<>();
         if(UserPreferencesManager.hasAssignedOrder(context)){
             // If still active order, goes directly to order map
             checkForActiveOrder();
+        } else {
+            getDistrictOrders();
         }
 
 
 
         // no order assigned
-        orders = new ArrayList<>();
+
         mProgressView = findViewById(R.id.get_orders_progress);
         mNoOrdersTxt = (TextView)findViewById(R.id.noOrdersLabel);
 
-        getDistrictOrders();
+
         this.assignButton = (Button)this.findViewById(R.id.assignOrderButton);
         assignButton.setEnabled(false);
         assignButton.setOnClickListener(new View.OnClickListener() {
@@ -96,7 +99,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         skipAssignmentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO REVIEW!
                 Intent orderMap = new Intent(context, OrderMap.class);
                 orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(orderMap);
@@ -124,9 +126,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             public void success(List<OrderDM> orderDMs, Response response) {
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
-                    if(orderDMs.size() > 0){
+                    if (orderDMs.size() > 0) {
                         mNoOrdersTxt.setVisibility(View.INVISIBLE);
-                    } else  {
+                    } else {
                         mNoOrdersTxt.setVisibility(View.VISIBLE);
                     }
 
@@ -163,6 +165,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     Intent orderMap = new Intent(context, OrderMap.class);
                     orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(orderMap);
+                } else {
+                    UserPreferencesManager.clearOrderAssignment(context);
+                    getDistrictOrders();
                 }
             }
 

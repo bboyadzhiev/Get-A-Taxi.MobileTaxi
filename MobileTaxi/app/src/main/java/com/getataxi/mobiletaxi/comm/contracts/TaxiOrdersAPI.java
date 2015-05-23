@@ -29,7 +29,7 @@ public interface TaxiOrdersAPI {
     @POST("/api/TaxiOrders")
     void addOrder(@Body OrderDetailsDM orderDM,  Callback<OrderDetailsDM> callback);
 
-    @PUT("/api/TaxiOrders")
+    @PUT("/api/TaxiOrders/{id}")
     void assignOrder(@Path("id") int orderId, Callback<OrderDetailsDM> callback);
 
     @PUT("/api/TaxiOrders")

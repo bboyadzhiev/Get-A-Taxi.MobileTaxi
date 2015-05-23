@@ -3,9 +3,11 @@ package com.getataxi.mobiletaxi;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.res.Resources;
@@ -17,6 +19,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +31,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.getataxi.mobiletaxi.comm.RestClient;
 import com.getataxi.mobiletaxi.comm.RestClientManager;
 import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
@@ -84,6 +88,8 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+
     }
 
     @Override
@@ -105,9 +111,38 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
             finish();
         }
 
+        if(id == R.id.action_change_server){
+           changeBaseServerURL();
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
+
+    private void changeBaseServerURL(){
+        AlertDialog.Builder alert= new AlertDialog.Builder(this);
+        final LayoutInflater inflater= getLayoutInflater();
+        final View myView= inflater.inflate(R.layout.dialog_base_url, null);
+        alert.setTitle(R.string.dialog_base_url_title);
+        alert.setMessage(R.string.enter_base_url);
+
+        alert.setView(myView);
+        EditText input = (EditText) myView.findViewById(R.id.base_server_edit_text);
+        input.setText(UserPreferencesManager.getBaseUrl(context));
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                EditText inp = (EditText) myView.findViewById(R.id.base_server_edit_text);
+                String base_url = inp.getText().toString();
+                UserPreferencesManager.setBaseUrl(context, base_url);
+                RestClientManager.client = new RestClient(UserPreferencesManager.getBaseUrl(context));
+            }
+        });
+        //AlertDialog sad= builder.create();
+        alert.create().show();
+
+    }
 
     private void populateAutoComplete() {
         getLoaderManager().initLoader(0, null, this);

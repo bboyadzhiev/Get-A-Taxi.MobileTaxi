@@ -72,6 +72,18 @@ public class UserPreferencesManager {
     }
 
 
+    public static String getBaseUrl(Context context){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        return userPrefs.getString(Constants.BASE_URL_STORAGE, Constants.DEFAULT_URL);
+    }
+
+    public static void setBaseUrl(Context context, String base_url){
+        SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
+        SharedPreferences.Editor editor = userPrefs.edit();
+        editor.putString(Constants.BASE_URL_STORAGE, base_url);
+        editor.commit();
+    }
+
     // Driver account data
     public static void saveUserData(RegisterUserDM userDM, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);

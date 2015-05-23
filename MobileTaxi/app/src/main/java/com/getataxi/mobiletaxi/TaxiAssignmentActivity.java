@@ -116,7 +116,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
                 showProgress(false);
             }
         });
@@ -144,7 +144,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
                 if (status == HttpStatus.SC_BAD_REQUEST) {
                     mNoTaxies.setVisibility(View.INVISIBLE);
                    // Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
-                    Toast.makeText(context, response.getReason(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
                 }
 
                 showProgress(false);
@@ -152,8 +152,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
             @Override
             public void failure(RetrofitError error) {
-                String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-                Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                 showProgress(false);
             }
         });
@@ -170,7 +169,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_order_assignment, menu);
+        getMenuInflater().inflate(R.menu.menu_taxi_assignment, menu);
         return true;
     }
 

@@ -35,7 +35,8 @@ public class RestClient{
         this.headers = new ArrayList<NameValuePair>();
         this.baseUrl = baseUrl;
         Gson gson = new GsonBuilder()
-                .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS'Z'")
+               // .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS'Z'")
+                .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
                 .create();
 
         RequestInterceptor requestInterceptor = new RequestInterceptor() {

@@ -21,6 +21,7 @@ import com.getataxi.mobiletaxi.comm.RestClientManager;
 import com.getataxi.mobiletaxi.comm.models.OrderDM;
 import com.getataxi.mobiletaxi.comm.models.OrderDetailsDM;
 import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
+import com.getataxi.mobiletaxi.fragments.OrderDetailsFragment;
 import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 
@@ -37,6 +38,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         AdapterView.OnItemClickListener {
 
     private ArrayList<OrderDM> orders;
+    private OrderDetailsFragment orderDetailsFragment;
     private ListView ordersListView;
     private Button assignButton;
     private Button skipAssignmentButton;
@@ -58,13 +60,21 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_assignment);
+
+        orderDetailsFragment = (OrderDetailsFragment)getFragmentManager()
+                .findFragmentById(R.id.orderDetailsFragment);
+        getFragmentManager().beginTransaction().hide(orderDetailsFragment).commit();
+
         ordersListView = (ListView) this.findViewById(R.id.orders_list_view);
+
         assignedTaxi = UserPreferencesManager.getAssignedTaxi(context);
 
         if(UserPreferencesManager.hasAssignedOrder(context)){
             // If still active order, goes directly to order map
             checkForActiveOrder();
         }
+
+
 
         // no order assigned
         orders = new ArrayList<>();
@@ -93,12 +103,11 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             }
         });
 
-        getDistrictOrders();
+        //getDistrictOrders();
     }
 
     private void populateOrdersListView() {
         if(!orders.isEmpty()) {
-            ordersListView = (ListView) this.findViewById(R.id.orders_list_view);
 
             ordersListAdapter = new ClientOrdersListAdapter(context,
                     R.layout.fragment_order_list_item, orders);
@@ -137,6 +146,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             @Override
             public void failure(RetrofitError error) {
                 showProgress(false);
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                 assignButton.setEnabled(true);
             }
         });
@@ -151,7 +161,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     // Still active order for this taxi
                     Toast.makeText(context, R.string.in_order_assignment, Toast.LENGTH_LONG).show();
                     Intent orderMap = new Intent(context, OrderMap.class);
-                    orderMap.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(orderMap);
                 }
             }
@@ -218,7 +228,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 return true;
             }
 
-            RestClientManager.unassignTaxi(assignedTaxi.taxiId, context, new Callback() {
+            RestClientManager.unassignTaxi(assignedTaxi.taxiId, context, new Callback<Object>() {
                 @Override
                 public void success(Object o, Response response) {
                     int status = response.getStatus();
@@ -243,7 +253,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
                 @Override
                 public void failure(RetrofitError error) {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    //Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
                     showProgress(false);
                 }
             });
@@ -260,6 +271,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+        getFragmentManager().beginTransaction().show(orderDetailsFragment).commit();
 
         orderAddressTxt = (TextView)findViewById(R.id.orderAddressDetail);
         orderAddressTxt.setText(orders.get(position).orderAddress);

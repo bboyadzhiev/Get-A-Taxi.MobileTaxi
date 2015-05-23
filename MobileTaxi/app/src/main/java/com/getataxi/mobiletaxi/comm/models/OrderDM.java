@@ -37,5 +37,5 @@ public class OrderDM {
     public String userComment;
 
     @SerializedName("pickupTime")
-    public Date pickupTime;
+    public int pickupTime;
 }

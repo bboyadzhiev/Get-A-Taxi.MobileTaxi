@@ -437,7 +437,7 @@ public class OrderMap extends FragmentActivity  {
 
                     OrderDetailsDM driverOrder = prepareDriverOrderDM();
                     driverOrder.orderedAt = Calendar.getInstance().getTime();
-                    driverOrder.pickupTime = Calendar.getInstance().getTime();
+                    driverOrder.pickupTime = 0;
                     RestClientManager.addOrder(driverOrder, context, new Callback<OrderDetailsDM>() {
                         @Override
                         public void success(OrderDetailsDM orderDetailsDM, Response response) {

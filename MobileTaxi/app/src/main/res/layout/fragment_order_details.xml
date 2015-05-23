@@ -3,6 +3,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/common_action_bar_splitter"
     tools:context="com.getataxi.mobiletaxi.fragments.OrdersListFragment">
 
     <TextView
@@ -34,7 +35,6 @@
             android:layout_weight="4"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:text="sdkjhkjhdsjkhfkjsdf sdkjfhsdkjfhkjsdf kjhsdfkjhsdkjhdf sdkfjhsdkjfh"
             android:layout_gravity="center_vertical"
             android:textSize="20sp" />
     </LinearLayout>

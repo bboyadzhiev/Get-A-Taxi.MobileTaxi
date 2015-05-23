@@ -196,12 +196,12 @@ public class RestClientManager {
         taxiApi.assignTaxi(taxi, callback);
     }
 
-    public static void updateTaxi(TaxiDM taxi, Context context, Callback callback){
+    public static void updateTaxi(TaxiDM taxi, Context context, Callback<Object> callback){
         TaxiAPI taxiApi = getTaxiAPI(context);
         taxiApi.updateTaxi(taxi, callback);
     }
 
-    public static void unassignTaxi(int id, Context context, Callback callback){
+    public static void unassignTaxi(int id, Context context, Callback<Object> callback){
         TaxiAPI taxiApi = getTaxiAPI(context);
         taxiApi.unassignTaxi(id, callback);
     }

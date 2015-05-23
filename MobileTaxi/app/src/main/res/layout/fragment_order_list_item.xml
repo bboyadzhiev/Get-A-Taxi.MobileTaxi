@@ -11,7 +11,11 @@
         android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="20sp" />
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="?android:textAppearanceListItem"
+        />
 
     <Space
         android:layout_width="10dp"
@@ -22,8 +26,12 @@
         android:gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:text="@string/order_to_not_specified"
-        android:textSize="15sp" />
+        android:textSize="14sp"
+        />
 
     <Space
         android:layout_width="10dp"
@@ -35,6 +43,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/no_comment"
-        android:textSize="12sp" />
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="12sp"
+        />
 
 </LinearLayout>

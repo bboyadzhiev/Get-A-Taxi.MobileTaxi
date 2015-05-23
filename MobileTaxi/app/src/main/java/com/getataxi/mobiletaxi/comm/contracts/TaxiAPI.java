@@ -5,6 +5,7 @@ import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
 
 
 import java.util.List;
+import java.util.Objects;
 
 import retrofit.Callback;
 import retrofit.http.Body;
@@ -31,8 +32,8 @@ public interface TaxiAPI {
     void assignTaxi(@Body TaxiDM taxiDM, Callback<TaxiDetailsDM> callback);
 
     @PUT("/api/Taxi")
-    void updateTaxi(@Body TaxiDM taxiDM, Callback callback);
+    void updateTaxi(@Body TaxiDM taxiDM, Callback<Object> callback);
 
     @DELETE("/api/Taxi/{id}")
-    void unassignTaxi(@Path("id") int id, Callback callback);
+    void unassignTaxi(@Path("id") int id, Callback<Object> callback);
 }

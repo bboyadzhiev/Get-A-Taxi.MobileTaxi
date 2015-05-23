@@ -1,7 +1,6 @@
 package com.getataxi.mobiletaxi.utils;
 
 import android.content.Context;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,10 +55,9 @@ public class ClientOrdersListAdapter extends ArrayAdapter<OrderDM> {
         }
 
         holder.orderAddress.setText(this.orders.get(position).orderAddress);
-        holder.orderDestination.setText(Html.fromHtml("<small><small>"
-                + this.orders.get(position).destinationAddress + "</small></small>"));
-        holder.clientComment.setText(Html.fromHtml("<small><small>"
-                + this.orders.get(position).userComment + "</small></small>"));
+        holder.orderDestination.setText(this.orders.get(position).destinationAddress);
+        holder.clientComment.setText(this.orders.get(position).userComment);
+
 
         return convertView;
     }

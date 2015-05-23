@@ -116,8 +116,6 @@ public class OrderMap extends FragmentActivity  {
                         markerTitle, false
                 );
                 taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi));
-
-
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
                 // Client location change
 
@@ -145,7 +143,7 @@ public class OrderMap extends FragmentActivity  {
                         markerTitle,
                         true
                 );
-                clientLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.person));
+
             }
         }
     };
@@ -164,27 +162,20 @@ public class OrderMap extends FragmentActivity  {
         phoneNumber = tMgr.getLine1Number();
 
         mProgressView = findViewById(R.id.order_map_progress);
-
         initInputs();
-
         setUpMapIfNeeded();
-
-
-
     }
-
 
     @Override
     protected void onStart(){
         super.onStart();
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
-
+        trackingEnabled = true;
         hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
         if(hasAssignedOrder) {
             assignedOrderId = UserPreferencesManager.getLastOrderId(context);
@@ -199,7 +190,6 @@ public class OrderMap extends FragmentActivity  {
 
         // Start location service
         Intent locationService = new Intent(OrderMap.this, LocationService.class);
-
         locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
         context.startService(locationService);
 
@@ -295,13 +285,18 @@ public class OrderMap extends FragmentActivity  {
                                 clientLocationMarker,
                                 new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
                                 assignedOrderDM.orderAddress, true);
+                        clientLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.person));
                         if (!assignedOrderDM.destinationAddress.isEmpty()) {
                             destinationLocationMarker = updateMarker(destinationLocationMarker,
                                     new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
-                                    assignedOrderDM.destinationAddress, false
-
+                                    assignedOrderDM.destinationAddress,
+                                    false
                             );
+
+                            destinationLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.destination));
                         }
+
+                        initiateTracking(assignedOrderDM.orderId);
 
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
@@ -313,11 +308,15 @@ public class OrderMap extends FragmentActivity  {
 
             @Override
             public void failure(RetrofitError error) {
-                int status = error.getResponse().getStatus();
-                if (status == HttpStatus.SC_NOT_FOUND) {
-                    // Clear stored order id
-                    Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
-                    clearStoredOrder();
+                if(error.getResponse() != null){
+                    int status = error.getResponse().getStatus();
+                    if (status == HttpStatus.SC_NOT_FOUND) {
+                        // Clear stored order id
+                        Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
+                        clearStoredOrder();
+                    }else {
+                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 } else {
                     Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                 }
@@ -327,23 +326,23 @@ public class OrderMap extends FragmentActivity  {
     }
 
     private boolean orderNotActive(OrderDetailsDM assignedOrderDM) {
-        if(assignedOrderDM.isWaiting){
-            if(assignedOrderDM.isFinished){
+        if(assignedOrderDM.isWaiting){ // not picked up
+            if(assignedOrderDM.isFinished){ // cancelled
                 // cancelled already
                 clearStoredOrder();
                 toggleButton(1); // "Place custom order"
                 return true;
-            } else{
+            } else{ // waiting for pick up
                 toggleButton(0); // "Cancel order"
             }
 
         }else {
-            if(assignedOrderDM.isFinished){
+            if(assignedOrderDM.isFinished){ // finished order
                 // finished already
                 clearStoredOrder();
                 toggleButton(1); // "Place custom order"
                 return true;
-            } else{
+            } else{ // picked up, in progress
                 toggleButton(2); // "Finish order"
             }
         }
@@ -412,12 +411,16 @@ public class OrderMap extends FragmentActivity  {
 
                     @Override
                     public void failure(RetrofitError error) {
-                        int status = error.getResponse().getStatus();
-                        if(status == HttpStatus.SC_NOT_FOUND){
-                            // Clear stored order id
-                            Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
-                            clearStoredOrder();
-                            toggleButton(1);
+                        if(error.getResponse() != null){
+                            int status = error.getResponse().getStatus();
+                            if(status == HttpStatus.SC_NOT_FOUND){
+                                // Clear stored order id
+                                Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
+                                clearStoredOrder();
+                                toggleButton(1);
+                            } else {
+                                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                            }
                         } else {
                             Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                         }
@@ -476,17 +479,20 @@ public class OrderMap extends FragmentActivity  {
             public void onClick(View v) {
                 finishOrderButton.setEnabled(false);
                 showProgress(true);
-                if(taxiDriverLocation != null){
+
                     OrderDetailsDM finishedOrder = prepareDriverOrderDM();
                     finishedOrder.isWaiting = false;
                     finishedOrder.isFinished = true;
                     // TODO: add additional data like bill or time
-
-                    RestClientManager.updateOrder(finishedOrder, context, new Callback<OrderDetailsDM>() {
+                if(taxiDriverLocation != null) {
+                    finishedOrder.destinationLatitude = taxiDriverLocation.getLatitude();
+                    finishedOrder.destinationLongitude = taxiDriverLocation.getLongitude();
+                }
+                RestClientManager.updateOrder(finishedOrder, context, new Callback<OrderDetailsDM>() {
                         @Override
                         public void success(OrderDetailsDM orderDetailsDM, Response response) {
                             int status = response.getStatus();
-                            if(status == HttpStatus.SC_OK){
+                            if (status == HttpStatus.SC_OK) {
                                 clearStoredOrder();
                                 toggleButton(1);
                             }
@@ -500,7 +506,7 @@ public class OrderMap extends FragmentActivity  {
                             toggleButton(1);
                         }
                     });
-                }
+
                 showProgress(false);
             }
         });
@@ -576,24 +582,6 @@ public class OrderMap extends FragmentActivity  {
         }
         return super.onOptionsItemSelected(item);
     }
-
-
-
-//    private AssignedOrderDM fromClientOrderDM(OrderDetailsDM clientOrder) {
-//        AssignedOrderDM order = new AssignedOrderDM();
-//        order.orderId = clientOrder.orderId;
-//        order.orderAddress = clientOrder.orderAddress;
-//        order.orderLatitude = clientOrder.orderLatitude;
-//        order.orderLongitude = clientOrder.orderLongitude;
-//        order.destinationAddress = clientOrder.destinationAddress;
-//        order.destinationLatitude = clientOrder.destinationLatitude;
-//        order.destinationLongitude = clientOrder.destinationLongitude;
-//        order.userComment = clientOrder.userComment;
-//        order.taxiId = -1;
-//        return  order;
-//    }
-
-
 
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly

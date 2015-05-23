@@ -70,16 +70,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         assignedTaxi = UserPreferencesManager.getAssignedTaxi(context);
 
         orders = new ArrayList<>();
-        if(UserPreferencesManager.hasAssignedOrder(context)){
-            // If still active order, goes directly to order map
-            checkForActiveOrder();
-        } else {
-            getDistrictOrders();
-        }
-
-
-
-        // no order assigned
 
         mProgressView = findViewById(R.id.get_orders_progress);
         mNoOrdersTxt = (TextView)findViewById(R.id.noOrdersLabel);
@@ -105,7 +95,12 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             }
         });
 
-        //getDistrictOrders();
+        if(UserPreferencesManager.hasAssignedOrder(context)){
+            // If still active order, goes directly to order map
+            checkForActiveOrder();
+        } else {
+            getDistrictOrders();
+        }
     }
 
     private void populateOrdersListView() {
@@ -173,7 +168,11 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
             @Override
             public void failure(RetrofitError error) {
-
+                if(error.getBody() != null) {
+                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
             }
         });
     }

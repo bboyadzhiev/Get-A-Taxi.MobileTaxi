@@ -10,7 +10,7 @@ public final class Constants {
 
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
-    public static final String DEFAULT_URL = "http://192.168.50.103:14938";
+    public static final String DEFAULT_URL = "http://192.168.50.112:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
     public static final String HUB_ENDPOINT = "/signalr";

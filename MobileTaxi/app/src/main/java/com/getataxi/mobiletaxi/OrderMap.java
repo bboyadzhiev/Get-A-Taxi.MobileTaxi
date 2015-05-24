@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,7 +51,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 
-public class OrderMap extends FragmentActivity  {
+public class OrderMap extends ActionBarActivity {
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
 

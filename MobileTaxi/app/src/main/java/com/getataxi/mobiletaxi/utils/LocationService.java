@@ -60,8 +60,6 @@ public class LocationService extends Service
         Bundle b = intent.getExtras();
         reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
 
-
-
         return Service.START_NOT_STICKY;
     }
 

@@ -259,8 +259,11 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
                 @Override
                 public void failure(RetrofitError error) {
-                    //Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                    if(error.getBody() != null) {
+                        Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                     showProgress(false);
                 }
             });

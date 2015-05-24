@@ -16,10 +16,6 @@
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment" />
 
-
-
-
-
     <!-- Cancel Order button -->
     <Button
         android:id="@+id/btn_cancel_order"

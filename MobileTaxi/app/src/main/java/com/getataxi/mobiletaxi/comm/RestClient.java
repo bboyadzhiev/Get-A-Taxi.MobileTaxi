@@ -88,7 +88,7 @@ public class RestClient{
 
     public TaxiStandsAPI getTaxiStandsService(List<NameValuePair> headersPassed){
       //  this.headers.clear();
-        if (headersPassed != null || !headersPassed.isEmpty()) {
+        if (headersPassed != null && !headersPassed.isEmpty()) {
             this.headers = headersPassed;
         }
         return taxiStandsService;
@@ -99,7 +99,6 @@ public class RestClient{
             this.headers.clear();
             this.headers = heads;
         } else {
-            this.headers.clear();
             this.headers = new ArrayList<NameValuePair>();
             this.headers.addAll(heads);
         }

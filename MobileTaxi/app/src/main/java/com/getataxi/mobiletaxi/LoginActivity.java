@@ -91,6 +91,12 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
 
 
     }
+	
+	@Override
+    protected void onResume(){
+		 super.onResume();
+        RestClientManager.client = new RestClient(UserPreferencesManager.getBaseUrl(context));
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

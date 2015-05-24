@@ -13,9 +13,8 @@
     <string name="password">Password</string>
     <string name="login_success_message">Welcome, %1$s!</string>
 
-<!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_order_assignment">OrderAssignmentActivity</string>
+    <string name="title_activity_order_assignment">Order Assignment</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="in_order_assignment">You are still in active order!</string>

@@ -10,7 +10,6 @@ android:weightSum="100"
 android:orientation="horizontal"
 tools:context="com.getataxi.mobiletaxi.OrderAssignmentActivity" >
 
-    <!-- Progress Bar -->
 
     <fragment
         android:id="@+id/ordersListFragment"
@@ -21,15 +20,7 @@ tools:context="com.getataxi.mobiletaxi.OrderAssignmentActivity" >
         android:layout_above="@+id/orderDetailsFragment"
         android:layout_alignParentTop="true"
         android:layout_alignParentBottom="false"/>
-    <ProgressBar
-        android:id="@+id/get_orders_progress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:visibility="gone" />
+
     <fragment
         android:id="@+id/orderDetailsFragment"
         android:name="com.getataxi.mobiletaxi.fragments.OrderDetailsFragment"
@@ -52,17 +43,29 @@ tools:context="com.getataxi.mobiletaxi.OrderAssignmentActivity" >
         <Button
             android:id="@+id/assignOrderButton"
             android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
             android:layout_height="wrap_content"
             android:text="@string/assign_order_txt"
             android:layout_weight="0.5" />
         <Button
             android:id="@+id/skipOrderAssignmentButton"
             android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
             android:layout_height="wrap_content"
             android:text="@string/skip_assign_txt"
             android:layout_weight="0.5"
             />
     </LinearLayout>
 
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/get_orders_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone" />
 
 </RelativeLayout>

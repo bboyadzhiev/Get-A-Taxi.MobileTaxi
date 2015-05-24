@@ -123,8 +123,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 if (status == HttpStatus.SC_OK) {
                     if (orderDMs.size() > 0) {
                         mNoOrdersTxt.setVisibility(View.INVISIBLE);
+                        assignButton.setEnabled(false);
                     } else {
                         mNoOrdersTxt.setVisibility(View.VISIBLE);
+                        assignButton.setEnabled(false);
                     }
 
                     orders.clear();
@@ -144,7 +146,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             public void failure(RetrofitError error) {
                 showProgress(false);
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                assignButton.setEnabled(true);
+                assignButton.setEnabled(false);
             }
         });
     }

@@ -33,6 +33,7 @@ import java.util.List;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 public class OrderAssignmentActivity extends ActionBarActivity implements
         AdapterView.OnItemClickListener {
@@ -151,17 +152,19 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             @Override
             public void failure(RetrofitError error) {
                 showProgress(false);
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                showToastError(error);
                 assignButton.setEnabled(false);
             }
         });
     }
 
     private void checkForActiveOrder(){
+        showProgress(true);
        int assignedOrderId =  UserPreferencesManager.getLastOrderId(context);
         RestClientManager.getOrder(assignedOrderId, context, new Callback<OrderDetailsDM>() {
             @Override
             public void success(OrderDetailsDM orderDetailsDM, Response response) {
+                showProgress(false);
                 if (orderDetailsDM.taxiId == assignedTaxi.taxiId && !orderDetailsDM.isFinished) {
                     // Still active order for this taxi
                     Toast.makeText(context, R.string.in_order_assignment, Toast.LENGTH_LONG).show();
@@ -176,11 +179,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
             @Override
             public void failure(RetrofitError error) {
-                if(error.getBody() != null) {
-                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                showToastError(error);
+                showProgress(false);
             }
         });
     }
@@ -213,7 +213,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                showToastError(error);
                 showProgress(false);
             }
         });
@@ -265,11 +265,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
                 @Override
                 public void failure(RetrofitError error) {
-                    if(error.getBody() != null) {
-                        Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
+                    showToastError(error);
                     showProgress(false);
                 }
             });
@@ -298,6 +294,19 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         selectedOrderId = orders.get(position).orderId;
 
         assignButton.setEnabled(true);
+    }
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     /**

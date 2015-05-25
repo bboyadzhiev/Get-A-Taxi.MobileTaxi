@@ -49,6 +49,7 @@ import java.util.Calendar;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 
 public class OrderMap extends ActionBarActivity {
@@ -107,6 +108,7 @@ public class OrderMap extends ActionBarActivity {
                 Bundle data = intent.getExtras();
 
                 taxiDriverLocation = data.getParcelable(Constants.LOCATION);
+                double threshold = data.getDouble(Constants.LOCATION_ACCURACY, 30);
 
                 double clientLat = taxiDriverLocation.getLatitude();
                 double clientLon = taxiDriverLocation.getLongitude();
@@ -121,7 +123,14 @@ public class OrderMap extends ActionBarActivity {
                 // Update taxi location too
                 taxi.latitude = clientLat;
                 taxi.longitude = clientLon;
-                placeDriverOrderButton.setEnabled(true);
+
+                if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
+                    // Reverse geocode for an address
+                    placeDriverOrderButton.setEnabled(true);
+                }
+
+
+
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
                 // Client location change
 
@@ -283,11 +292,12 @@ public class OrderMap extends ActionBarActivity {
 
                     @Override
                     public void failure(RetrofitError error) {
+                        showToastError(error);
                         if(error.getResponse() != null){
                             int status = error.getResponse().getStatus();
+
                             if(status == HttpStatus.SC_NOT_FOUND){
                                 // Clear stored order id
-                                Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
                                 clearStoredOrder();
                                 toggleButton(ButtonType.Place);
                             }
@@ -295,17 +305,9 @@ public class OrderMap extends ActionBarActivity {
                                 // Cancelled or finished already
                                 clearStoredOrder();
                                 toggleButton(ButtonType.Place);
-                                if(error.getBody() != null){
-                                    Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                                } else {
-                                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                                }
+
                             }
-                            else {
-                                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                            }
-                        } else {
-                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+
                         }
                         showProgress(false);
                     }
@@ -348,11 +350,7 @@ public class OrderMap extends ActionBarActivity {
                         @Override
                         public void failure(RetrofitError error) {
                             showProgress(false);
-                            if (error.getBody() != null) {
-                                Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                            }
+                            showToastError(error);
 
                             toggleButton(ButtonType.Place);
                         }
@@ -387,7 +385,7 @@ public class OrderMap extends ActionBarActivity {
                     @Override
                     public void failure(RetrofitError error) {
                         showProgress(false);
-                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                        showToastError(error);
                         toggleButton(ButtonType.Finish);
                     }
                 });
@@ -478,18 +476,7 @@ public class OrderMap extends ActionBarActivity {
 
             @Override
             public void failure(RetrofitError error) {
-                if (error.getResponse() != null) {
-                    int status = error.getResponse().getStatus();
-                    if (status == HttpStatus.SC_NOT_FOUND) {
-                        // Clear stored order id
-                        Toast.makeText(context, R.string.order_not_found, Toast.LENGTH_LONG).show();
-                        clearStoredOrder();
-                    } else {
-                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                showToastError(error);
                 showProgress(false);
             }
         });
@@ -581,24 +568,7 @@ public class OrderMap extends ActionBarActivity {
 
             @Override
             public void failure(RetrofitError error) {
-                if(error.getResponse() != null){
-                    int status = error.getResponse().getStatus();
-                    if(status == HttpStatus.SC_NOT_FOUND){
-                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                    if (status == HttpStatus.SC_BAD_REQUEST) {
-                        if(error.getBody() != null){
-                            Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                    else {
-                        Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                showToastError(error);
             }
         });
     }
@@ -643,7 +613,7 @@ public class OrderMap extends ActionBarActivity {
 
                 @Override
                 public void failure(RetrofitError error) {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                    showToastError(error);
                     showProgress(false);
                 }
             });
@@ -754,6 +724,7 @@ public class OrderMap extends ActionBarActivity {
                     .title(title);
 
             marker = mMap.addMarker(markerOpts);
+            animateMarker(marker, location, false);
         } else {
             marker.setTitle(title);
             animateMarker(marker, location, false);
@@ -762,6 +733,19 @@ public class OrderMap extends ActionBarActivity {
         return marker;
     }
 
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
 
     /**
      * Shows the ordering progress UI

@@ -74,13 +74,6 @@ public class StartupActivity extends Activity {
     }
 
     private void proceedWithStartup() {
-
-        try {
-            Thread.sleep(2000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         // Check for login credentials
         if(UserPreferencesManager.checkForLoginCredentials(context)){
             LoginUserDM loginUserDM = UserPreferencesManager.getLoginData(context);
@@ -123,8 +116,7 @@ public class StartupActivity extends Activity {
 
                     @Override
                     public void failure(RetrofitError error) {
-                        String errorJson = new String(((TypedByteArray) error.getResponse().getBody()).getBytes());
-                        Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
+                        showToastError(error);
                     }
                 });
 
@@ -137,6 +129,19 @@ public class StartupActivity extends Activity {
             Intent loginIntent = new Intent(context, LoginActivity.class);
             loginIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(loginIntent);
+        }
+    }
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }

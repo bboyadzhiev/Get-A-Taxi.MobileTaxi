@@ -150,7 +150,7 @@ public class LocationService extends Service
             if(isBetterLocation(loc, previousBestLocation)) {
 
                 broadcastIntent.putExtra(Constants.LOCATION, loc);
-
+                broadcastIntent.putExtra(Constants.LOCATION_ACCURACY, loc.getAccuracy());
                 // Notify all interested parties
                 sendBroadcast(broadcastIntent);
             }

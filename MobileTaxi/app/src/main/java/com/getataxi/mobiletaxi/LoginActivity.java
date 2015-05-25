@@ -45,6 +45,7 @@ import java.util.List;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
 
 
 public class LoginActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -243,15 +244,26 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
                 @Override
                 public void failure(RetrofitError error) {
                     showProgress(false);
-                    Toast.makeText(context, error.toString(), Toast.LENGTH_LONG).show();
-//                    String errorJson =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-//                    Toast.makeText(context, errorJson, Toast.LENGTH_LONG).show();
+                    showToastError(error);
 
                 }
             });
 
 //            mAuthTask = new UserLoginTask(email, password);
 //            mAuthTask.execute((Void) null);
+        }
+    }
+
+    private void showToastError(RetrofitError error) {
+        if (error.getResponse().getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

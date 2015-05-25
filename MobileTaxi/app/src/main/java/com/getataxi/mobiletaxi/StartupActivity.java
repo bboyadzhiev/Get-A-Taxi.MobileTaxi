@@ -133,11 +133,15 @@ public class StartupActivity extends Activity {
     }
 
     private void showToastError(RetrofitError error) {
-        if (error.getResponse().getBody() != null) {
-            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-            if(!json.isEmpty()){
-                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
-            } else {
+        if(error.getResponse() != null) {
+            if (error.getResponse().getBody() != null) {
+                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+                if(!json.isEmpty()){
+                    Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else {

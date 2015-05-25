@@ -116,7 +116,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(context, error.getBody().toString(), Toast.LENGTH_LONG).show();
+                showToastError(error);
                 showProgress(false);
             }
         });
@@ -134,7 +134,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
                     } else {
                         mNoTaxies.setVisibility(View.VISIBLE);
                     }
-                    Toast.makeText(context, "Taxies: "+taxiesDMs.size(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Taxies: " + taxiesDMs.size(), Toast.LENGTH_LONG).show();
                     taxies = new ArrayList<>();
                     taxies.clear();
                     taxies.addAll(taxiesDMs);
@@ -143,7 +143,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
                 if (status == HttpStatus.SC_BAD_REQUEST) {
                     mNoTaxies.setVisibility(View.INVISIBLE);
-                   // Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    // Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
                     Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
                 }
 
@@ -152,7 +152,7 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                showToastError(error);
                 showProgress(false);
             }
         });
@@ -165,6 +165,23 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
        startActivity(intent);
 
    }
+
+    private void showToastError(RetrofitError error) {
+        if(error.getResponse() != null) {
+            if (error.getResponse().getBody() != null) {
+                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+                if(!json.isEmpty()){
+                    Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

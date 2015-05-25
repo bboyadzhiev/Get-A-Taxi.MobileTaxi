@@ -35,10 +35,11 @@ public class SignalRTrackingService extends Service {
     private Intent broadcastIntent;
     private HubProxy proxy;
     private boolean reportLocationEnabled = false;
+    int orderId;
     @Override
     public void onCreate() {
         super.onCreate();
-
+        orderId = -1;
         // Register for Location Service broadcasts
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.LOCATION_UPDATED);
@@ -51,7 +52,9 @@ public class SignalRTrackingService extends Service {
         super.onStartCommand(intent, flags, startId);
         Toast.makeText(this, getString(R.string.tracking_started), Toast.LENGTH_LONG).show();
 
-        int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
+        Log.d("TRACKINGSERVICE", "onStartCommand");
+
+        orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
         String baseUsrl = intent.getStringExtra(Constants.BASE_URL_STORAGE);
         reportLocationEnabled = intent.getBooleanExtra(Constants.LOCATION_REPORT_ENABLED, false);
 
@@ -60,6 +63,8 @@ public class SignalRTrackingService extends Service {
         }
 
         String server =  baseUsrl + Constants.HUB_ENDPOINT;
+
+        Log.d("TRACKINGSERVICE", server);
 
         Logger l  = new Logger() {
             @Override
@@ -78,7 +83,7 @@ public class SignalRTrackingService extends Service {
         connection.setCredentials(new TokenAuthenticationCredentials(loginData.accessToken));
         //connection.prepareRequest(request);
 
-
+        Log.d("TRACKINGSERVICE", "awaiting connection");
         SignalRFuture<Void> awaitConnection = connection.start();
         try {
             awaitConnection.get();
@@ -88,11 +93,14 @@ public class SignalRTrackingService extends Service {
             e.printStackTrace();
         }
 
+        Log.d("TRACKINGSERVICE", "invoking hub");
         proxy.invoke(Constants.HUB_CONNECT, orderId);
 
+        Log.d("TRACKINGSERVICE", "registering callback");
         proxy.on(Constants.HUB_PEER_LOCATION_CHANGED, new SubscriptionHandler2<Double, Double>() {
             @Override
             public void run(Double lat, Double lon) {
+                Log.d("TRACKINGSERVICE", "HUB_PEER_LOCATION_CHANGED");
                 Location loc = new Location("void");
                 loc.setLatitude(lat);
                 loc.setLongitude(lon);
@@ -103,7 +111,7 @@ public class SignalRTrackingService extends Service {
         }, Double.class, Double.class);
 
 
-
+        Log.d("TRACKINGSERVICE", "DONE onStartCommand()");
         return Service.START_STICKY;
                 //--------------------------------------------------------------------------------
     }
@@ -127,11 +135,10 @@ public class SignalRTrackingService extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
-            if(!reportLocationEnabled){
-                return;
-            }
-
             if (action.equals(Constants.LOCATION_UPDATED)) {
+                if(!reportLocationEnabled){
+                    return;
+                }
                 Bundle data = intent.getExtras();
 
                 Location location = data.getParcelable(Constants.LOCATION);
@@ -139,8 +146,9 @@ public class SignalRTrackingService extends Service {
                 double lat = location.getLatitude();
                 double lon = location.getLongitude();
 
-                if ( proxy != null){
-                    proxy.invoke(Constants.HUB_MY_LOCATION_CHANGED, lat, lon);
+                if ( proxy != null && orderId != -1){
+                    Log.d("TRACKINGSERVICE", "HUB_MY_LOCATION_CHANGED");
+                    proxy.invoke(Constants.HUB_MY_LOCATION_CHANGED, orderId, lat, lon);
                 }
 
             }

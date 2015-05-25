@@ -21,6 +21,7 @@
     <string name="action_taxi_un_assignment_txt">Release taxi!</string>
     <string name="action_release_taxi_txt">Release taxi!</string>
     <string name="change_server">Change server</string>
+    <string name="tracking_started">Tracking started</string>
 
 
 </resources>

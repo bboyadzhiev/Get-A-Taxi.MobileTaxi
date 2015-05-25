@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.getataxi.mobiletaxi.R;
 import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.utils.Constants;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
@@ -48,7 +49,7 @@ public class SignalRTrackingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        Toast.makeText(this, "SignalR Service Start", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.tracking_started), Toast.LENGTH_LONG).show();
 
         int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
         String baseUsrl = intent.getStringExtra(Constants.BASE_URL_STORAGE);
@@ -100,6 +101,8 @@ public class SignalRTrackingService extends Service {
                 sendBroadcast(broadcastIntent);
             }
         }, Double.class, Double.class);
+
+
 
         return Service.START_STICKY;
                 //--------------------------------------------------------------------------------

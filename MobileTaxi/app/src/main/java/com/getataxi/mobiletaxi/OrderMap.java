@@ -108,7 +108,7 @@ public class OrderMap extends ActionBarActivity {
                 Bundle data = intent.getExtras();
 
                 taxiDriverLocation = data.getParcelable(Constants.LOCATION);
-                double threshold = data.getDouble(Constants.LOCATION_ACCURACY, 30);
+                double threshold = data.getDouble(Constants.LOCATION_ACCURACY, 100);
 
                 double clientLat = taxiDriverLocation.getLatitude();
                 double clientLon = taxiDriverLocation.getLongitude();

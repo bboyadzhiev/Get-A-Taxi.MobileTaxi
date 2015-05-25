@@ -76,8 +76,8 @@ public class StartupActivity extends Activity {
     private void proceedWithStartup() {
 
         try {
-            Log.e("DATE: ", UserPreferencesManager.tokenDateFormat.parse("Thu, 09 Apr 2015 20:48:26 GMT").toString());
-        } catch (ParseException e) {
+            Thread.sleep(2000);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

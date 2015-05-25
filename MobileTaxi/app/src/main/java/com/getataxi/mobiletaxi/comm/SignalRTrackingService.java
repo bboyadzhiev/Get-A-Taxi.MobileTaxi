@@ -43,7 +43,6 @@ public class SignalRTrackingService extends Service {
         filter.addAction(Constants.LOCATION_UPDATED);
         registerReceiver(locationReceiver, filter);
 
-
     }
 
     @Override
@@ -52,13 +51,14 @@ public class SignalRTrackingService extends Service {
         Toast.makeText(this, "SignalR Service Start", Toast.LENGTH_LONG).show();
 
         int orderId = intent.getIntExtra(Constants.ORDER_ID, -1);
+        String baseUsrl = intent.getStringExtra(Constants.BASE_URL_STORAGE);
         reportLocationEnabled = intent.getBooleanExtra(Constants.LOCATION_REPORT_ENABLED, false);
 
         if(orderId == -1){
             return -1;
         }
 
-        String server =  RestClientManager.base_url + Constants.HUB_ENDPOINT;
+        String server =  baseUsrl + Constants.HUB_ENDPOINT;
 
         Logger l  = new Logger() {
             @Override

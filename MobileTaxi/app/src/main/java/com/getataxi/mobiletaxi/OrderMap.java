@@ -86,6 +86,7 @@ public class OrderMap extends ActionBarActivity {
     // TRACKING SERVICES
     protected void initiateTracking(int orderId){
         Intent trackingIntent = new Intent(OrderMap.this, SignalRTrackingService.class);
+        trackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
         trackingIntent.putExtra(Constants.LOCATION_REPORT_ENABLED, trackingEnabled);
         trackingIntent.putExtra(Constants.ORDER_ID, orderId);
         startService(trackingIntent);

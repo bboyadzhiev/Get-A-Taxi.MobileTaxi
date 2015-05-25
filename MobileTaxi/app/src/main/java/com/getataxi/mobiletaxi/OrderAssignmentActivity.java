@@ -95,6 +95,12 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             }
         });
 
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         if(UserPreferencesManager.hasAssignedOrder(context)){
             // If still active order, goes directly to order map
             checkForActiveOrder();

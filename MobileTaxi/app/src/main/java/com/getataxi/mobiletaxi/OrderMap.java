@@ -131,7 +131,7 @@ public class OrderMap extends ActionBarActivity {
 
 
 
-            } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED)){
+            } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
                 // Client location change
 
                 // Checking if we have any order data
@@ -218,7 +218,7 @@ public class OrderMap extends ActionBarActivity {
         // Register for Location Service broadcasts
         filter.addAction(Constants.LOCATION_UPDATED);
         // And peer location change
-        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED);
+        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED_BC);
         registerReceiver(locationReceiver, filter);
     }
 

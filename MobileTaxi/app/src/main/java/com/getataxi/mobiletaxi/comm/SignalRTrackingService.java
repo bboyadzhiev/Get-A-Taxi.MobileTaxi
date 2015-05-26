@@ -79,7 +79,7 @@ public class SignalRTrackingService extends Service {
         // Prepare request
        // Request request = new Request("POST");
         connection = new HubConnection(server);
-        proxy = connection.createHubProxy(Constants.HUB_PROXY);
+        proxy = connection.createHubProxy(Constants.TRACKING_HUB_PROXY);
         connection.setCredentials(new TokenAuthenticationCredentials(loginData.accessToken));
         //connection.prepareRequest(request);
 
@@ -104,7 +104,7 @@ public class SignalRTrackingService extends Service {
                 Location loc = new Location("void");
                 loc.setLatitude(lat);
                 loc.setLongitude(lon);
-                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED);
+                broadcastIntent = new Intent(Constants.HUB_PEER_LOCATION_CHANGED_BC);
                 broadcastIntent.putExtra(Constants.LOCATION, loc);
                 sendBroadcast(broadcastIntent);
             }

@@ -14,13 +14,23 @@ public final class Constants {
     public static final String DEFAULT_URL = "http://172.16.250.145:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
+    // endpoints, DO NOT CHANGE
     public static final String HUB_ENDPOINT = "/signalr";
-    public static final String HUB_PROXY = "trackingHub";
+    public static final String TRACKING_HUB_PROXY = "trackingHub";
+    public static final String ORDERS_HUB_PROXY = "ordersHub";
+
+    // proxy commands, DO NOT CHANGE
     public static final String HUB_CONNECT = "Open";
     public static final String HUB_DISCONNECT = "Close";
     public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
+    public static final String HUB_ORDERS_UPDATED =  "updateOrders";
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
     public static final String ORDER_ID = "ORDER_ID";
+
+    public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
+    public static final String HUB_ORDERS_UPDATED_BC = PACKAGE_NAME + HUB_ORDERS_UPDATED;
+    public static final String HUB_UPDATED_ORDERS_LIST = PACKAGE_NAME + ".ORDERS";
+    public static final String STOP_ORDERS_BUH_BC = PACKAGE_NAME + ".STOP_ORDERS_BUH_BC";
 
     // Connection timeouts in milliseconds
     public static final int READ_TIMEOUT = 15000;

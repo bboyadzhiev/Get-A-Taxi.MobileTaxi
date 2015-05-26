@@ -72,6 +72,10 @@
             android:name=".comm.SignalRTrackingService"
             android:exported="false"
             />
+        <service
+            android:name=".comm.SignalROrdersService"
+            android:exported="false"
+            />
     </application>
 
 </manifest>

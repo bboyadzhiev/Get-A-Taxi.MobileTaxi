@@ -3,8 +3,10 @@ package com.getataxi.mobiletaxi;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -18,15 +20,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.getataxi.mobiletaxi.comm.RestClientManager;
+import com.getataxi.mobiletaxi.comm.SignalROrdersService;
 import com.getataxi.mobiletaxi.comm.models.OrderDM;
 import com.getataxi.mobiletaxi.comm.models.OrderDetailsDM;
 import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
 import com.getataxi.mobiletaxi.fragments.OrderDetailsFragment;
 import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
+import com.getataxi.mobiletaxi.utils.Constants;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.apache.http.HttpStatus;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,6 +97,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         skipAssignmentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                Intent stopOrdersService = new Intent(Constants.STOP_ORDERS_BUH_BC);
+                sendBroadcast(stopOrdersService);
+
                 Intent orderMap = new Intent(context, OrderMap.class);
                 orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(orderMap);
@@ -108,6 +119,59 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         } else {
             getDistrictOrders();
         }
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter();
+        // Register for Location Service broadcasts
+        filter.addAction(Constants.HUB_ORDERS_UPDATED_BC);
+        // And peer location change
+        registerReceiver(broadcastsReceiver, filter);
+        initiateOrdersTracking();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // Stop tracking service
+        Intent ordersTrackingIntent = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
+        stopService(ordersTrackingIntent);
+
+        unregisterReceiver(broadcastsReceiver);
+    }
+
+    private final BroadcastReceiver broadcastsReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (action.equals(Constants.HUB_ORDERS_UPDATED_BC)) {
+                String ordersString = intent.getStringExtra(Constants.HUB_UPDATED_ORDERS_LIST);
+                Gson gson = new Gson();
+                Type listOfOrders = new TypeToken<List<OrderDetailsDM>>(){}.getType();
+                List<OrderDetailsDM> ordersData = gson.fromJson(ordersString, listOfOrders);
+                orders.clear();
+                orders.addAll(ordersData);
+                populateOrdersListView();
+            }
+        }
+    };
+
+    // ORDERS TRACKING SERVICE
+    protected void initiateOrdersTracking(){
+        Intent ordersTrackingIntent = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
+        ordersTrackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
+        ordersTrackingIntent.putExtra(Constants.DISTRICT_ID, UserPreferencesManager.getDistrictId(context));
+        startService(ordersTrackingIntent);
     }
 
     private void populateOrdersListView() {

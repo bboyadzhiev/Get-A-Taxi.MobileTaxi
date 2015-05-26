@@ -282,6 +282,8 @@ public class OrderMap extends ActionBarActivity {
                             // Cancelled successfully
                             clearStoredOrder();
                             toggleButton(ButtonType.Place);
+                            taxi.onDuty = true;
+                            taxi.isAvailable = false;
                             reportTaxiStatus(taxi);
                             Toast.makeText(context, getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
                             return;
@@ -377,6 +379,8 @@ public class OrderMap extends ActionBarActivity {
                         if (status == HttpStatus.SC_OK) {
                             clearStoredOrder();
                             toggleButton(ButtonType.Place);
+                            taxi.onDuty = true;
+                            taxi.isAvailable = false;
                             reportTaxiStatus(taxi);
                         }
                         showProgress(false);

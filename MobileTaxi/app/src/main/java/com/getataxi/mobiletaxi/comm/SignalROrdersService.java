@@ -9,6 +9,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.getataxi.mobiletaxi.R;
+import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.comm.models.OrderDetailsDM;
 import com.getataxi.mobiletaxi.utils.Constants;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
@@ -46,7 +47,7 @@ public class SignalROrdersService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        districtId = -1;
 
     }
 
@@ -62,7 +63,7 @@ public class SignalROrdersService extends Service {
             }
         };
         Log.d("SignalROrdersService", "onStartCommand");
-        l.log("onStartCommand", LogLevel.Information);
+        l.log("onStartCommand", LogLevel.Verbose);
 
         districtId = intent.getIntExtra(Constants.DISTRICT_ID, -1);
 
@@ -73,13 +74,17 @@ public class SignalROrdersService extends Service {
         }
 
         String server =  baseUsrl + Constants.HUB_ENDPOINT;
-        String accessToken = UserPreferencesManager.getToken(getApplicationContext());
+
+        //String accessToken = UserPreferencesManager.getToken(getApplicationContext());
+        // Getting user details
+        LoginUserDM loginData = UserPreferencesManager.getLoginData(getApplicationContext());
+
         connection = new HubConnection(server);
         proxy = connection.createHubProxy(Constants.ORDERS_HUB_PROXY);
-        connection.setCredentials(new TokenAuthenticationCredentials(accessToken));
+        connection.setCredentials(new TokenAuthenticationCredentials(loginData.accessToken));
 
         Log.d("SignalROrdersService", "Awaiting connection");
-        l.log("Awaiting connection", LogLevel.Information);
+        l.log("Awaiting connection", LogLevel.Verbose);
         SignalRFuture<Void> awaitConnection = connection.start();
         try {
             awaitConnection.get();
@@ -90,11 +95,11 @@ public class SignalROrdersService extends Service {
         }
 
         Log.d("SignalROrdersService", "Invoking orders hub");
-        l.log("Invoking orders hub", LogLevel.Information);
+        l.log("Invoking orders hub", LogLevel.Verbose);
         proxy.invoke(Constants.HUB_CONNECT, districtId);
 
         Log.d("SignalROrdersService", "Registering callback");
-        l.log("Registering callback", LogLevel.Information);
+        l.log("Registering callback", LogLevel.Verbose);
 
 //        proxy.subscribe(Constants.HUB_ORDERS_UPDATED).addReceivedHandler(new Action<JSONArray>() {
 //            @Override
@@ -109,6 +114,7 @@ public class SignalROrdersService extends Service {
         proxy.on(Constants.HUB_ORDERS_UPDATED, new SubscriptionHandler1<JSONArray>() {
             @Override
             public void run(JSONArray ordersJASONArray) {
+                Log.d("SignalROrdersService", ordersJASONArray.toString());
                 broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
                 broadcastIntent.putExtra(Constants.HUB_UPDATED_ORDERS_LIST, ordersJASONArray.toString());;
                 sendBroadcast(broadcastIntent);
@@ -123,5 +129,20 @@ public class SignalROrdersService extends Service {
         return null;
     }
 
+    public static Thread performOnBackgroundThread(final Runnable runnable) {
+        final Thread t = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    runnable.run();
+                } catch(Exception e) {
+                    Log.d("Error", e.toString());
+                } finally {
 
+                }
+            }
+        };
+        t.start();
+        return t;
+    }
 }

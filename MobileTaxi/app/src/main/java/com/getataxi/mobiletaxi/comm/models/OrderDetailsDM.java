@@ -18,7 +18,7 @@ public class OrderDetailsDM extends OrderDM {
     public String firstName;
     @SerializedName("lastName")
     public String lastName;
-    @SerializedName("customerPhoneNumber")
+    @SerializedName("custPhone")
     public String customerPhoneNumber;
     @SerializedName("orderedAt")
     public Date orderedAt;

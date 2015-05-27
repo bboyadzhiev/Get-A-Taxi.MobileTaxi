@@ -29,12 +29,16 @@ import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
 import com.getataxi.mobiletaxi.utils.Constants;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.http.HttpStatus;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 import retrofit.Callback;
@@ -98,7 +102,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             @Override
             public void onClick(View v) {
 
-                Intent stopOrdersService = new Intent(Constants.STOP_ORDERS_BUH_BC);
+                Intent stopOrdersService = new Intent(Constants.STOP_ORDERS_HUB_BC);
                 sendBroadcast(stopOrdersService);
 
                 Intent orderMap = new Intent(context, OrderMap.class);
@@ -129,9 +133,14 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+
         IntentFilter filter = new IntentFilter();
-        // Register for Location Service broadcasts
+        // Register for Order Assignment Hub broadcasts
         filter.addAction(Constants.HUB_ORDERS_UPDATED_BC);
+        filter.addAction(Constants.HUB_ADDED_ORDER_BC);
+        filter.addAction(Constants.HUB_ASSIGNED_ORDER_BC);
+        filter.addAction(Constants.HUB_CANCELLED_ORDER_BC);
+        filter.addAction(Constants.HUB_UPDATED_ORDER_BC);
         // And peer location change
         registerReceiver(broadcastsReceiver, filter);
         initiateOrdersTracking();
@@ -154,14 +163,92 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
+
             if (action.equals(Constants.HUB_ORDERS_UPDATED_BC)) {
-                String ordersString = intent.getStringExtra(Constants.HUB_UPDATED_ORDERS_LIST);
-                Gson gson = new Gson();
+                String ordersString = intent.getStringExtra(Constants.HUB_UPDATE_ORDERS_LIST);
+                Gson gson = new GsonBuilder()
+                        .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
+                        .create();
                 Type listOfOrders = new TypeToken<List<OrderDetailsDM>>(){}.getType();
                 List<OrderDetailsDM> ordersData = gson.fromJson(ordersString, listOfOrders);
                 orders.clear();
                 orders.addAll(ordersData);
                 populateOrdersListView();
+            }
+            if(action.equals(Constants.HUB_ADDED_ORDER_BC)){
+                String orderString = intent.getStringExtra(Constants.HUB_ADDED_ORDER);
+                Gson gson = new GsonBuilder()
+                        .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
+                        .create();
+                Type type = new TypeToken<OrderDetailsDM>(){}.getType();
+                OrderDetailsDM order = gson.fromJson(orderString, type);
+                OrderDM orderDM = fromOrderDetailsDM(order);
+                orders.add(orderDM);
+                populateOrdersListView();
+
+
+            }
+            if(action.equals(Constants.HUB_CANCELLED_ORDER_BC)){
+                int cancelledOrderId = intent.getIntExtra(Constants.HUB_CANCELLED_ORDER, -1);
+                if(cancelledOrderId != -1  && !orders.isEmpty()){
+                    Iterator<OrderDM> itr = orders.iterator();
+                    while (itr.hasNext()){
+                        OrderDM element = itr.next();
+                        if(element.orderId == cancelledOrderId) {
+                            itr.remove();
+                        }
+                    }
+                    populateOrdersListView();
+
+//                    OrderDM orderToCancel = new OrderDM();
+//                    boolean found = false;
+//                    for(OrderDM orderDM : orders){
+//                        if(orderDM.orderId == cancelledOrderId){
+//                            orderToCancel = orderDM;
+//                            found = true;
+//                        }
+//                    }
+//                    if(found){
+//                        orders.remove(orderToCancel);
+//                        populateOrdersListView();
+//                    }
+                }
+            }
+            if(action.equals(Constants.HUB_UPDATED_ORDER_BC)){
+                String orderString = intent.getStringExtra(Constants.HUB_UPDATED_ORDER);
+                Gson gson = new GsonBuilder()
+                        .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
+                        .create();
+                Type type = new TypeToken<OrderDetailsDM>(){}.getType();
+                OrderDetailsDM order = gson.fromJson(orderString, type);
+
+                OrderDM orderDM = fromOrderDetailsDM(order);
+
+                for(OrderDM ord: orders){
+                    if(ord.orderId == order.orderId){
+                        updateOrderDM(ord, orderDM);
+                    }
+                }
+                populateOrdersListView();
+
+            }
+            if(action.equals(Constants.HUB_ASSIGNED_ORDER_BC)){
+                int assignedOrderId = intent.getIntExtra(Constants.ORDER_ID, -1);
+                int taxiId = intent.getIntExtra(Constants.ASSIGNED_TAXI_ID, -1);
+                if(taxiId == assignedTaxi.taxiId){
+                   return;
+                } else {
+                    if(assignedOrderId != -1  && !orders.isEmpty()){
+                        Iterator<OrderDM> itr = orders.iterator();
+                        while (itr.hasNext()){
+                            OrderDM element = itr.next();
+                            if(element.orderId == assignedOrderId) {
+                                itr.remove();
+                            }
+                        }
+                        populateOrdersListView();
+                    }
+                }
             }
         }
     };
@@ -175,17 +262,33 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     }
 
     private void populateOrdersListView() {
-        if(!orders.isEmpty()) {
+        if(ordersListAdapter != null){
+            ordersListAdapter.notifyDataSetChanged();
+        } else {
+            if(!orders.isEmpty()) {
+                Collections.sort(orders, new DistanceComparator());
+                ordersListAdapter = new ClientOrdersListAdapter(context,
+                        R.layout.fragment_order_list_item, orders);
 
-            ordersListAdapter = new ClientOrdersListAdapter(context,
-                    R.layout.fragment_order_list_item, orders);
+                ordersListView.setAdapter(ordersListAdapter);
+                ordersListView.setOnItemClickListener(this);
+            }
+        }
 
-            ordersListView.setAdapter(ordersListAdapter);
-            ordersListView.setOnItemClickListener(this);
+    }
+
+    public class DistanceComparator implements Comparator<OrderDM> {
+        @Override
+        public int compare(OrderDM o1, OrderDM o2) {
+            double val1 = ((o1.orderLatitude - assignedTaxi.latitude) + (o1.orderLongitude - assignedTaxi.longitude));
+            double val2 = ((o1.orderLatitude - assignedTaxi.latitude) + (o1.orderLongitude - assignedTaxi.longitude));
+            boolean result = val2 < val1;
+            return result ? 1 : -1;
         }
     }
 
     private void getDistrictOrders() {
+
         showProgress(true);
         RestClientManager.getDistrictOrders(context, new Callback<List<OrderDM>>() {
             @Override
@@ -202,6 +305,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
                     orders.clear();
                     orders.addAll(orderDMs);
+
                     populateOrdersListView();
                 }
 
@@ -375,6 +479,32 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         } else {
             Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private OrderDM fromOrderDetailsDM(OrderDetailsDM orderDetails){
+        OrderDM order = new OrderDM();
+        order.orderId = orderDetails.orderId;
+        order.orderAddress = orderDetails.orderAddress;
+        order.orderLatitude = orderDetails.orderLatitude;
+        order.orderLongitude = orderDetails.orderLongitude;
+        order.destinationAddress = orderDetails.destinationAddress;
+        order.destinationLatitude = orderDetails.destinationLatitude;
+        order.destinationLongitude = orderDetails.destinationLongitude;
+        order.userComment = orderDetails.userComment;
+        order.pickupTime = orderDetails.pickupTime;
+        return order;
+    }
+
+    private void updateOrderDM(OrderDM order, OrderDM newOrderDM){
+        order.orderId = newOrderDM.orderId;
+        order.orderAddress = newOrderDM.orderAddress;
+        order.orderLatitude = newOrderDM.orderLatitude;
+        order.orderLongitude = newOrderDM.orderLongitude;
+        order.destinationAddress = newOrderDM.destinationAddress;
+        order.destinationLatitude = newOrderDM.destinationLatitude;
+        order.destinationLongitude = newOrderDM.destinationLongitude;
+        order.userComment = newOrderDM.userComment;
+        order.pickupTime = newOrderDM.pickupTime;
     }
 
     /**

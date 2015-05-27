@@ -10,27 +10,46 @@ public final class Constants {
 
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
-    public static final String DEFAULT_URL = "http://192.168.50.112:14938";
-    //public static final String DEFAULT_URL = "http://172.16.250.145:14938";
+    //public static final String DEFAULT_URL = "http://192.168.50.112:14938";
+    public static final String DEFAULT_URL = "http://172.16.250.145:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
+
+    // HUBS
     // endpoints, DO NOT CHANGE
     public static final String HUB_ENDPOINT = "/signalr";
-    public static final String TRACKING_HUB_PROXY = "trackingHub";
-    public static final String ORDERS_HUB_PROXY = "ordersHub";
-
     // proxy commands, DO NOT CHANGE
     public static final String HUB_CONNECT = "Open";
     public static final String HUB_DISCONNECT = "Close";
-    public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
-    public static final String HUB_ORDERS_UPDATED =  "updateOrders";
-    public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
-    public static final String ORDER_ID = "ORDER_ID";
 
+
+    // TrackingHub
+    public static final String TRACKING_HUB_PROXY = "trackingHub";
+    public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
+    public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+    // Hub broadcasts
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
-    public static final String HUB_ORDERS_UPDATED_BC = PACKAGE_NAME + HUB_ORDERS_UPDATED;
-    public static final String HUB_UPDATED_ORDERS_LIST = PACKAGE_NAME + ".ORDERS";
-    public static final String STOP_ORDERS_BUH_BC = PACKAGE_NAME + ".STOP_ORDERS_BUH_BC";
+
+    // OrdersHub
+    public static final String ORDERS_HUB_PROXY = "ordersHub";
+    public static final String HUB_UPDATE_ORDERS_LIST =  "updateOrders";
+    public static final String HUB_ADDED_ORDER =  "addedOrder";
+    public static final String HUB_CANCELLED_ORDER =  "cancelledOrder";
+    public static final String HUB_ASSIGNED_ORDER =  "assignedOrder";
+    public static final String HUB_UPDATED_ORDER =  "updatedOrder";
+    // Hub broadcasts
+    public static final String HUB_ORDERS_UPDATED_BC = PACKAGE_NAME + HUB_UPDATE_ORDERS_LIST;
+    public static final String HUB_ADDED_ORDER_BC = PACKAGE_NAME +  HUB_ADDED_ORDER;
+    public static final String HUB_CANCELLED_ORDER_BC = PACKAGE_NAME +  HUB_CANCELLED_ORDER;
+    public static final String HUB_ASSIGNED_ORDER_BC = PACKAGE_NAME +  HUB_ASSIGNED_ORDER;
+    public static final String HUB_UPDATED_ORDER_BC = PACKAGE_NAME +  HUB_UPDATED_ORDER;
+
+    public static final String ORDER_ID = PACKAGE_NAME +  "ORDER_ID";
+    public static final String DISTRICT_ID =  PACKAGE_NAME + ".DISTRICT_ID";
+
+
+
+    public static final String STOP_ORDERS_HUB_BC = PACKAGE_NAME + ".STOP_ORDERS_HUB_BC";
 
     // Connection timeouts in milliseconds
     public static final int READ_TIMEOUT = 15000;
@@ -93,7 +112,7 @@ public final class Constants {
     public static final String ASSIGNED_TAXI =  PACKAGE_NAME + ".ASSIGNED_TAXI";
     public static final String ASSIGNED_TAXI_ID =  PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
 
-    public static final String DISTRICT_ID =  PACKAGE_NAME + ".DISTRICT_ID";
+
     // UI - no UI strings should be here!
 
     // DEBUGGING STRINGS

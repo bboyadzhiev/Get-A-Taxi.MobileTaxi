@@ -71,6 +71,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     ClientOrdersListAdapter ordersListAdapter;
     Context context = this;
     Gson gson;
+    DistanceComparator distanceComparator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +142,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         gson = new GsonBuilder()
                 .setDateFormat(Constants.GSON_DATE_FORMAT)
                 .create();
+
+        distanceComparator = new DistanceComparator();
 
         // Start location service
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
@@ -213,6 +216,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
             // ORDERS HUB
             if (action.equals(Constants.HUB_ORDERS_UPDATED_BC)) {
+                if(true) return;
                 String ordersString = intent.getStringExtra(Constants.HUB_UPDATE_ORDERS_LIST);
 
                 Type listOfOrders = new TypeToken<List<OrderDetailsDM>>(){}.getType();
@@ -221,6 +225,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 orders.addAll(ordersData);
                 updateOrdersListView();
             }
+
             if(action.equals(Constants.HUB_ADDED_ORDER_BC)){
                 String orderString = intent.getStringExtra(Constants.HUB_ADDED_ORDER);
 
@@ -305,51 +310,45 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
     private void updateOrdersListView() {
         if(ordersListAdapter != null){
-            Collections.sort(orders, new DistanceComparator());
+            Collections.sort(orders, distanceComparator);
             ordersListAdapter.notifyDataSetChanged();
         } else {
             if(!orders.isEmpty()) {
-                Collections.sort(orders, new DistanceComparator());
+                mNoOrdersTxt.setVisibility(View.INVISIBLE);
+                Collections.sort(orders, distanceComparator);
                 ordersListAdapter = new ClientOrdersListAdapter(context,
                         R.layout.fragment_order_list_item, orders);
-
+                ordersListView.setVisibility(View.VISIBLE);
                 ordersListView.setAdapter(ordersListAdapter);
                 ordersListView.setOnItemClickListener(this);
+            } else {
+                mNoOrdersTxt.setVisibility(View.VISIBLE);
+                ordersListView.setVisibility(View.INVISIBLE);
             }
         }
-
     }
 
     public class DistanceComparator implements Comparator<OrderDM> {
         @Override
         public int compare(OrderDM o1, OrderDM o2) {
-            // TODO: FIX
-            double val1 = ((o1.orderLatitude - assignedTaxi.latitude) + (o1.orderLongitude - assignedTaxi.longitude));
-            double val2 = ((o2.orderLatitude - assignedTaxi.latitude) + (o2.orderLongitude - assignedTaxi.longitude));
+            double val1 = (Math.abs(o1.orderLatitude - assignedTaxi.latitude) + Math.abs(o1.orderLongitude - assignedTaxi.longitude));
+            double val2 = (Math.abs(o2.orderLatitude - assignedTaxi.latitude) + Math.abs(o2.orderLongitude - assignedTaxi.longitude));
             boolean result = val1 < val2;
             return result ? 1 : -1;
         }
     }
 
     private void getDistrictOrders() {
-        if(true) return;
+       // if(true) return;
         showProgress(true);
         RestClientManager.getDistrictOrders(context, new Callback<List<OrderDM>>() {
             @Override
             public void success(List<OrderDM> orderDMs, Response response) {
                 int status = response.getStatus();
                 if (status == HttpStatus.SC_OK) {
-                    if (orderDMs.size() > 0) {
-                        mNoOrdersTxt.setVisibility(View.INVISIBLE);
-                        assignButton.setEnabled(false);
-                    } else {
-                        mNoOrdersTxt.setVisibility(View.VISIBLE);
-                        assignButton.setEnabled(false);
-                    }
-
+                    assignButton.setEnabled(false);
                     orders.clear();
                     orders.addAll(orderDMs);
-
                     updateOrdersListView();
                 }
 

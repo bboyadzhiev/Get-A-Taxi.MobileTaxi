@@ -23,6 +23,7 @@
     <string name="change_server">Change server</string>
     <string name="tracking_started">Tracking started</string>
     <string name="district_orders_monitoring_service">District orders monitoring started...</string>
+    <string name="pickup_order_txt">Pick up!</string>
 
 
 </resources>

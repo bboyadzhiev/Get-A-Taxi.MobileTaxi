@@ -19,6 +19,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Type;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import microsoft.aspnet.signalr.client.LogLevel;
@@ -82,44 +85,49 @@ public class SignalROrdersService extends Service {
         SignalRFuture<Void> awaitConnection = connection.start();
         try {
             awaitConnection.get();
-        } catch (InterruptedException e) {
+        }  catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
+
         }
 
-        // TODO: REMOVE, USE REST CLIENT FOR THIS
-        proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<OrderDetailsDM[]>() {
-            @Override
-            public void run(OrderDetailsDM[] ordersList) {
-                Log.d("SignalROrdersService", ordersList.toString());
-
-//                Gson gson = new Gson();
-//                Type type = new TypeToken<OrderDetailsDM[]>(){}.getType();
-//                String serialized = gson.toJson(ordersList,type);
-//
-//                broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
-//                broadcastIntent.putExtra(Constants.HUB_UPDATE_ORDERS_LIST, serialized);;
-//                sendBroadcast(broadcastIntent);
-            }
-        }, OrderDetailsDM[].class);
-
-
         Log.d("SignalROrdersService", "Invoking orders hub");
-        l.log("Invoking orders hub", LogLevel.Verbose);
         proxy.invoke(Constants.HUB_CONNECT, districtId);
 
         Log.d("SignalROrdersService", "Registering callbacks");
-        l.log("Registering callbacks", LogLevel.Verbose);
 
-//        proxy.subscribe(Constants.HUB_UPDATE_ORDERS_LIST).addReceivedHandler(new Action<JSONArray>() {
+        // TODO: IGNORE, USE REST CLIENT FOR THIS
+        proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<JsonElement[]>() {
+            @Override
+            public void run(JsonElement[] ordersList) {
+                Log.d("SignalROrdersService", Constants.HUB_UPDATE_ORDERS_LIST);
+                List<String> asd = new ArrayList<String>();
+                for(JsonElement e : ordersList){
+                    Log.d("ORDER", e.toString());
+                    asd.add(e.toString());
+                }
+
+                String ordersString = asd.toString();
+                broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
+                broadcastIntent.putExtra(Constants.HUB_UPDATE_ORDERS_LIST, ordersString);
+                sendBroadcast(broadcastIntent);
+            }
+        }, JsonElement[].class);
+
+//        proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<JSONArray>() {
 //            @Override
-//            public void run(JSONArray jsonElements) throws Exception {
+//            public void run(JSONArray ordersList) {
+//                Log.d("SignalROrdersService", Constants.HUB_UPDATE_ORDERS_LIST);
 //
-//                Log.i("SignalR", "Message From Server: " + jsonElements.toString());
+//
+//                String ordersString = ordersList.toString();
+//                Log.d("SignalROrdersService", ordersString);
+//                broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
+//                broadcastIntent.putExtra(Constants.HUB_UPDATE_ORDERS_LIST, ordersString);
+//                sendBroadcast(broadcastIntent);
 //            }
-//        });
-
+//        }, JSONArray.class);
 
 
 //        proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<JSONArray>() {
@@ -136,54 +144,45 @@ public class SignalROrdersService extends Service {
 //                sendBroadcast(broadcastIntent);
 //            }
 //        }, JSONArray.class);
+//        proxy.on(Constants.HUB_ADDED_ORDER, new SubscriptionHandler1<OrderDetailsDM>() {
+//            @Override
+//            public void run(OrderDetailsDM order) {
+//                Log.d("SignalROrdersService", Constants.HUB_ADDED_ORDER);
+//
+//                Gson gson = new Gson();
+//                Type type = new TypeToken<OrderDetailsDM>(){}.getType();
+//                String serialized = gson.toJson(order,type);
+//
+//                broadcastIntent = new Intent(Constants.HUB_ADDED_ORDER_BC);
+//                broadcastIntent.putExtra(Constants.HUB_ADDED_ORDER, serialized);
+//                sendBroadcast(broadcastIntent);
+//            }
+//        }, OrderDetailsDM.class);
 
-
-
-        proxy.on(Constants.HUB_ADDED_ORDER, new SubscriptionHandler1<OrderDetailsDM>() {
+        proxy.on(Constants.HUB_ADDED_ORDER, new SubscriptionHandler1<JsonElement>() {
             @Override
-            public void run(OrderDetailsDM order) {
+            public void run(JsonElement order) {
                 Log.d("SignalROrdersService", Constants.HUB_ADDED_ORDER);
-
-                Gson gson = new Gson();
-                Type type = new TypeToken<OrderDetailsDM>(){}.getType();
-                String serialized = gson.toJson(order,type);
-
                 broadcastIntent = new Intent(Constants.HUB_ADDED_ORDER_BC);
-                broadcastIntent.putExtra(Constants.HUB_ADDED_ORDER, serialized);
+                broadcastIntent.putExtra(Constants.HUB_ADDED_ORDER, order.toString());
                 sendBroadcast(broadcastIntent);
             }
-        }, OrderDetailsDM.class);
+        }, JsonElement.class);
 
         proxy.on(Constants.HUB_CANCELLED_ORDER, new SubscriptionHandler1<Integer>() {
             @Override
             public void run(Integer orderId) {
+                Log.d("SignalROrdersService", Constants.HUB_CANCELLED_ORDER);
                 broadcastIntent = new Intent(Constants.HUB_CANCELLED_ORDER_BC);
                 broadcastIntent.putExtra(Constants.HUB_CANCELLED_ORDER, orderId);
                 sendBroadcast(broadcastIntent);
             }
         }, Integer.class);
 
-//        proxy.on(Constants.HUB_UPDATED_ORDER, new SubscriptionHandler1<OrderDetailsDM>() {
-//            @Override
-//            public void run(OrderDetailsDM order) {
-//                Log.d("SignalROrdersService", Constants.HUB_UPDATED_ORDER);
-//                Gson gson = new Gson();
-//                Type type = new TypeToken<OrderDetailsDM>(){}.getType();
-//                String serialized = gson.toJson(order,type);
-//
-//                broadcastIntent = new Intent(Constants.HUB_UPDATED_ORDER_BC);
-//                broadcastIntent.putExtra(Constants.HUB_UPDATED_ORDER, serialized);
-//                sendBroadcast(broadcastIntent);
-//            }
-//        }, OrderDetailsDM.class);
-
         proxy.on(Constants.HUB_UPDATED_ORDER, new SubscriptionHandler1<JsonElement>() {
             @Override
             public void run(JsonElement order) {
                 Log.d("SignalROrdersService", Constants.HUB_UPDATED_ORDER);
-//                Gson gson = new Gson();
-//                Type type = new TypeToken<JsonElement>(){}.getType();
-//                String serialized = gson.fromJson(order, type);
 
                 broadcastIntent = new Intent(Constants.HUB_UPDATED_ORDER_BC);
                 broadcastIntent.putExtra(Constants.HUB_UPDATED_ORDER, order.toString());
@@ -194,6 +193,7 @@ public class SignalROrdersService extends Service {
         proxy.on(Constants.HUB_ASSIGNED_ORDER, new SubscriptionHandler2<Integer, Integer>() {
             @Override
             public void run(Integer orderId, Integer taxiId) {
+                Log.d("SignalROrdersService", Constants.HUB_ASSIGNED_ORDER);
                 broadcastIntent = new Intent(Constants.HUB_ASSIGNED_ORDER_BC);
                 broadcastIntent.putExtra(Constants.ORDER_ID, orderId);
                 broadcastIntent.putExtra(Constants.ASSIGNED_TAXI_ID, taxiId);

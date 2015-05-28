@@ -29,8 +29,6 @@ public class LocationService extends Service
     public ClientLocationListener listener;
     public Location previousBestLocation = null;
 
-    private String reportLocationTitle;
-
     Intent broadcastIntent;
 
     @Override
@@ -56,9 +54,6 @@ public class LocationService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-
-        Bundle b = intent.getExtras();
-        reportLocationTitle = b.getString(Constants.LOCATION_REPORT_TITLE, "Unknown");
 
         return Service.START_NOT_STICKY;
     }

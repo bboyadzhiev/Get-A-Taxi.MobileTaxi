@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Location;
 import android.os.Build;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
 import com.getataxi.mobiletaxi.fragments.OrderDetailsFragment;
 import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
 import com.getataxi.mobiletaxi.utils.Constants;
+import com.getataxi.mobiletaxi.utils.LocationService;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,6 +58,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     private Button skipAssignmentButton;
 
     private TaxiDetailsDM assignedTaxi;
+    private Location taxiDriverLocation;
 
     private TextView orderAddressTxt;
     private TextView orderDestinationTxt;
@@ -67,6 +70,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
     ClientOrdersListAdapter ordersListAdapter;
     Context context = this;
+    Gson gson;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,25 +138,55 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     protected void onResume() {
         super.onResume();
 
+        gson = new GsonBuilder()
+                .setDateFormat(Constants.GSON_DATE_FORMAT)
+                .create();
+
+        // Start location service
+        Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
+        context.startService(locationService);
+
         IntentFilter filter = new IntentFilter();
-        // Register for Order Assignment Hub broadcasts
+        // Register for Orders Service Hub broadcasts
         filter.addAction(Constants.HUB_ORDERS_UPDATED_BC);
         filter.addAction(Constants.HUB_ADDED_ORDER_BC);
         filter.addAction(Constants.HUB_ASSIGNED_ORDER_BC);
         filter.addAction(Constants.HUB_CANCELLED_ORDER_BC);
         filter.addAction(Constants.HUB_UPDATED_ORDER_BC);
-        // And peer location change
+        filter.addAction(Constants.LOCATION_UPDATED);
+        // And broadcasts receiver
         registerReceiver(broadcastsReceiver, filter);
         initiateOrdersTracking();
+
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    protected void onPause(){
+        super.onPause();
 
         // Stop tracking service
-        Intent ordersTrackingIntent = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
-        stopService(ordersTrackingIntent);
+        Intent stopOrdersService = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
+        stopService(stopOrdersService);
+
+        UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+
+
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+
+        //Stop location service
+        Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
+        stopService(locationService);
 
         unregisterReceiver(broadcastsReceiver);
     }
@@ -163,28 +197,38 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
+            // LOCATION
+            if (action.equals(Constants.LOCATION_UPDATED)) {
+                // Client location change
+                Bundle data = intent.getExtras();
 
+                taxiDriverLocation = data.getParcelable(Constants.LOCATION);
+
+                // Update taxi location too
+                assignedTaxi.latitude = taxiDriverLocation.getLatitude();
+                assignedTaxi.longitude = taxiDriverLocation.getLongitude();
+                updateOrdersListView();
+
+            }
+
+            // ORDERS HUB
             if (action.equals(Constants.HUB_ORDERS_UPDATED_BC)) {
                 String ordersString = intent.getStringExtra(Constants.HUB_UPDATE_ORDERS_LIST);
-                Gson gson = new GsonBuilder()
-                        .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
-                        .create();
+
                 Type listOfOrders = new TypeToken<List<OrderDetailsDM>>(){}.getType();
                 List<OrderDetailsDM> ordersData = gson.fromJson(ordersString, listOfOrders);
                 orders.clear();
                 orders.addAll(ordersData);
-                populateOrdersListView();
+                updateOrdersListView();
             }
             if(action.equals(Constants.HUB_ADDED_ORDER_BC)){
                 String orderString = intent.getStringExtra(Constants.HUB_ADDED_ORDER);
-                Gson gson = new GsonBuilder()
-                        .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
-                        .create();
+
                 Type type = new TypeToken<OrderDetailsDM>(){}.getType();
                 OrderDetailsDM order = gson.fromJson(orderString, type);
                 OrderDM orderDM = fromOrderDetailsDM(order);
                 orders.add(orderDM);
-                populateOrdersListView();
+                updateOrdersListView();
 
 
             }
@@ -198,7 +242,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                             itr.remove();
                         }
                     }
-                    populateOrdersListView();
+                    updateOrdersListView();
 
 //                    OrderDM orderToCancel = new OrderDM();
 //                    boolean found = false;
@@ -210,15 +254,13 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 //                    }
 //                    if(found){
 //                        orders.remove(orderToCancel);
-//                        populateOrdersListView();
+//                        updateOrdersListView();
 //                    }
                 }
             }
             if(action.equals(Constants.HUB_UPDATED_ORDER_BC)){
                 String orderString = intent.getStringExtra(Constants.HUB_UPDATED_ORDER);
-                Gson gson = new GsonBuilder()
-                        .setDateFormat("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS")
-                        .create();
+
                 Type type = new TypeToken<OrderDetailsDM>(){}.getType();
                 OrderDetailsDM order = gson.fromJson(orderString, type);
 
@@ -229,7 +271,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                         updateOrderDM(ord, orderDM);
                     }
                 }
-                populateOrdersListView();
+                updateOrdersListView();
 
             }
             if(action.equals(Constants.HUB_ASSIGNED_ORDER_BC)){
@@ -246,7 +288,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                                 itr.remove();
                             }
                         }
-                        populateOrdersListView();
+                        updateOrdersListView();
                     }
                 }
             }
@@ -261,8 +303,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         startService(ordersTrackingIntent);
     }
 
-    private void populateOrdersListView() {
+    private void updateOrdersListView() {
         if(ordersListAdapter != null){
+            Collections.sort(orders, new DistanceComparator());
             ordersListAdapter.notifyDataSetChanged();
         } else {
             if(!orders.isEmpty()) {
@@ -280,15 +323,16 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     public class DistanceComparator implements Comparator<OrderDM> {
         @Override
         public int compare(OrderDM o1, OrderDM o2) {
+            // TODO: FIX
             double val1 = ((o1.orderLatitude - assignedTaxi.latitude) + (o1.orderLongitude - assignedTaxi.longitude));
-            double val2 = ((o1.orderLatitude - assignedTaxi.latitude) + (o1.orderLongitude - assignedTaxi.longitude));
-            boolean result = val2 < val1;
+            double val2 = ((o2.orderLatitude - assignedTaxi.latitude) + (o2.orderLongitude - assignedTaxi.longitude));
+            boolean result = val1 < val2;
             return result ? 1 : -1;
         }
     }
 
     private void getDistrictOrders() {
-
+        if(true) return;
         showProgress(true);
         RestClientManager.getDistrictOrders(context, new Callback<List<OrderDM>>() {
             @Override
@@ -306,7 +350,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     orders.clear();
                     orders.addAll(orderDMs);
 
-                    populateOrdersListView();
+                    updateOrdersListView();
                 }
 
                 if (status == HttpStatus.SC_BAD_REQUEST) {
@@ -337,7 +381,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     // Still active order for this taxi
                     Toast.makeText(context, R.string.in_order_assignment, Toast.LENGTH_LONG).show();
                     Intent orderMap = new Intent(context, OrderMap.class);
-                    orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    //orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(orderMap);
                 } else {
                     UserPreferencesManager.clearOrderAssignment(context);
@@ -363,7 +407,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
 
                     Intent orderMap = new Intent(context, OrderMap.class);
-                    orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    //orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     showProgress(false);
                     context.startActivity(orderMap);
                 }

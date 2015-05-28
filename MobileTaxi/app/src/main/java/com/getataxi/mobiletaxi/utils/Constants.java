@@ -7,6 +7,9 @@ public final class Constants {
 
     // APP NAME
     public static final String PACKAGE_NAME = Constants.class.getPackage().getName();
+    public static final String GSON_DATE_FORMAT = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS";
+    public static final int MAP_ANIMATION_ZOOM = 15;
+
 
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
@@ -84,7 +87,6 @@ public final class Constants {
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
     public static final String LOCATION_ACCURACY = PACKAGE_NAME + ".LOCATION_ACCURACY";
     public static final float LOCATION_ACCURACY_THRESHOLD = 20; // meters
-    public static final String LOCATION_REPORT_TITLE = PACKAGE_NAME + ".LOCATION_REPORT_TITLE";
 
 
     public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";

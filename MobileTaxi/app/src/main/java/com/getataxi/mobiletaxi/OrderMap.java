@@ -12,7 +12,6 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
@@ -75,6 +74,7 @@ public class OrderMap extends ActionBarActivity {
     private Marker taxiLocationMarker;
     private boolean trackingEnabled;
     private Button cancelOrderButton;
+    private Button pickupOrderButton;
     private Button placeDriverOrderButton;
     private Button finishOrderButton;
 
@@ -209,10 +209,9 @@ public class OrderMap extends ActionBarActivity {
             toggleButton(ButtonType.Place);
         }
 
-        // Start location service
-        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-        locationService.putExtra(Constants.LOCATION_REPORT_TITLE, phoneNumber);
-        context.startService(locationService);
+//        // Start location service
+//        Intent locationService = new Intent(OrderMap.this, LocationService.class);
+//        context.startService(locationService);
 
         IntentFilter filter = new IntentFilter();
         // Register for Location Service broadcasts
@@ -240,9 +239,9 @@ public class OrderMap extends ActionBarActivity {
     public void onDestroy() {
         super.onDestroy();
 
-        //Stop location service
-        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-        stopService(locationService);
+//        //Stop location service
+//        Intent locationService = new Intent(OrderMap.this, LocationService.class);
+//        stopService(locationService);
 
         // Stop tracking service
         Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
@@ -256,6 +255,64 @@ public class OrderMap extends ActionBarActivity {
     private void initInputs() {
         cancelOrderButton = (Button)findViewById(R.id.btn_cancel_order);
         cancelOrderButton.setEnabled(false);
+
+        pickupOrderButton = (Button)findViewById(R.id.btn_pickup_order);
+        pickupOrderButton.setEnabled(false);
+
+        pickupOrderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cancelOrderButton.setEnabled(false);
+                showProgress(true);
+
+                //set order in progress
+                clientOrderDM.isWaiting = false;
+                clientOrderDM.isFinished = false;
+                RestClientManager.updateOrder(clientOrderDM, context, new Callback<OrderDetailsDM>() {
+                    @Override
+                    public void success(OrderDetailsDM orderDetailsDM, Response response) {
+                        int status = response.getStatus();
+
+                        if (status == HttpStatus.SC_OK) {
+                            // Picked up successfully
+                            clientOrderDM = orderDetailsDM;
+                            UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
+                            assignedOrderId = orderDetailsDM.orderId;
+                            hasAssignedOrder = true;
+                            toggleButton(ButtonType.Finish);
+                            taxi.onDuty = true;
+                            taxi.isAvailable = false;
+                            reportTaxiStatus(taxi);
+                            return;
+                        }
+
+                        showProgress(false);
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        showToastError(error);
+                        if (error.getResponse() != null) {
+                            int status = error.getResponse().getStatus();
+
+                            if (status == HttpStatus.SC_NOT_FOUND) {
+                                // Clear stored order id
+                                clearStoredOrder();
+                                toggleButton(ButtonType.Place);
+                            }
+                            if (status == HttpStatus.SC_BAD_REQUEST) {
+                                // Cancelled or finished already
+                                clearStoredOrder();
+                                toggleButton(ButtonType.Place);
+
+                            }
+
+                        }
+                        showProgress(false);
+                    }
+                });
+            }
+        });
 
         placeDriverOrderButton = (Button)findViewById(R.id.btn_place_order);
         placeDriverOrderButton.setEnabled(false);
@@ -344,7 +401,7 @@ public class OrderMap extends ActionBarActivity {
                                 UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
                                 assignedOrderId = orderDetailsDM.orderId;
                                 hasAssignedOrder = true;
-                                toggleButton(ButtonType.Cancel);
+                                toggleButton(ButtonType.Finish);
                             }
                             showProgress(false);
                         }
@@ -399,10 +456,30 @@ public class OrderMap extends ActionBarActivity {
         });
     }
 
+    private void reportTaxiStatus(TaxiDetailsDM taxiDetailsDM){
+        if(taxiDetailsDM == null){
+            return;
+        }
+
+        RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Object>() {
+            @Override
+            public void success(Object o, Response response) {
+
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                showToastError(error);
+            }
+        });
+    }
+
     private void toggleButton(ButtonType button){
         if(button == ButtonType.Cancel){ // Cancel Order
             cancelOrderButton.setVisibility(View.VISIBLE);
             cancelOrderButton.setEnabled(true);
+            pickupOrderButton.setVisibility(View.VISIBLE);
+            pickupOrderButton.setEnabled(false);
             placeDriverOrderButton.setVisibility(View.INVISIBLE);
             placeDriverOrderButton.setEnabled(false);
             finishOrderButton.setVisibility(View.INVISIBLE);
@@ -410,7 +487,20 @@ public class OrderMap extends ActionBarActivity {
         } else if (button == ButtonType.Place) { // Place Driver Order
             cancelOrderButton.setVisibility(View.INVISIBLE);
             cancelOrderButton.setEnabled(false);
+            pickupOrderButton.setVisibility(View.INVISIBLE);
+            pickupOrderButton.setEnabled(false);
             placeDriverOrderButton.setVisibility(View.VISIBLE);
+            if(taxiDriverLocation != null) {
+                placeDriverOrderButton.setEnabled(true);
+            }
+            finishOrderButton.setVisibility(View.INVISIBLE);
+            finishOrderButton.setEnabled(false);
+        } else if (button == ButtonType.Pickup) { // Pickup client
+            cancelOrderButton.setVisibility(View.VISIBLE);
+            cancelOrderButton.setEnabled(true);
+            pickupOrderButton.setVisibility(View.VISIBLE);
+            pickupOrderButton.setEnabled(true);
+            placeDriverOrderButton.setVisibility(View.INVISIBLE);
             if(taxiDriverLocation != null) {
                 placeDriverOrderButton.setEnabled(true);
             }
@@ -419,6 +509,8 @@ public class OrderMap extends ActionBarActivity {
         } else { // Finish Order
             cancelOrderButton.setVisibility(View.INVISIBLE);
             cancelOrderButton.setEnabled(false);
+            pickupOrderButton.setVisibility(View.INVISIBLE);
+            pickupOrderButton.setEnabled(false);
             placeDriverOrderButton.setVisibility(View.INVISIBLE);
             placeDriverOrderButton.setEnabled(false);
             finishOrderButton.setVisibility(View.VISIBLE);
@@ -427,7 +519,7 @@ public class OrderMap extends ActionBarActivity {
     }
 
     public enum ButtonType {
-        Place, Cancel, Finish
+        Place, Pickup, Cancel, Finish
     }
 
     // LOGIC
@@ -559,23 +651,7 @@ public class OrderMap extends ActionBarActivity {
         return sourceOrderDM;
     }
 
-    private void reportTaxiStatus(TaxiDetailsDM taxiDetailsDM){
-        if(taxiDetailsDM == null){
-            return;
-        }
 
-        RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Object>() {
-            @Override
-            public void success(Object o, Response response) {
-
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                showToastError(error);
-            }
-        });
-    }
 
     // OPTIONS MENU
     @Override
@@ -714,7 +790,7 @@ public class OrderMap extends ActionBarActivity {
 
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(location)      // Sets the center of the map to location user
-                    .zoom(15)                   // Sets the zoom
+                    .zoom(Constants.MAP_ANIMATION_ZOOM)                   // Sets the zoom
                             //   .bearing(90)   // Sets the orientation of the camera to east
                             //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
                     .build();                   // Creates a CameraPosition from the builder

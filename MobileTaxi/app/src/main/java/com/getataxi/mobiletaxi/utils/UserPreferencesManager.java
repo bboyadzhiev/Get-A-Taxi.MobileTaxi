@@ -9,6 +9,7 @@ import com.getataxi.mobiletaxi.comm.models.TaxiStandDM;
 import com.getataxi.mobiletaxi.comm.models.LoginUserDM;
 import com.getataxi.mobiletaxi.comm.models.RegisterUserDM;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
@@ -29,6 +30,9 @@ public class UserPreferencesManager {
 
 
     public static DateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
+    private static Gson gson = new GsonBuilder()
+    .setDateFormat(Constants.GSON_DATE_FORMAT)
+    .create();
     //".issued":"Thu, 09 Apr 2015 20:48:26 GMT"
     public static DateFormat tokenDateFormat = new SimpleDateFormat(Constants.TOKEN_DATE_FORMAT, Locale.ENGLISH);
 
@@ -88,7 +92,6 @@ public class UserPreferencesManager {
     public static void saveUserData(RegisterUserDM userDM, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
-        Gson gson = new Gson();
         String registerData = gson.toJson(userDM);
         editor.putString(Constants.USER_DATA, registerData);
         editor.putBoolean(Constants.IS_LOGGED, false);
@@ -99,7 +102,6 @@ public class UserPreferencesManager {
             throws IllegalStateException, IOException {
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
-        Gson gson = new Gson();
         String loginData = gson.toJson(userDM);
         editor.putString(Constants.LOGIN_DATA, loginData);
         editor.putBoolean(Constants.IS_LOGGED, true);
@@ -172,7 +174,6 @@ public class UserPreferencesManager {
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String userData = userPrefs.getString(Constants.LOGIN_DATA, "");
        // Log.d("USER_DATA", userData);
-        Gson gson = new Gson();
         LoginUserDM userInfo = gson.fromJson(userData, LoginUserDM.class);
         return userInfo;
     }
@@ -189,7 +190,6 @@ public class UserPreferencesManager {
     public static void storeTaxiStands(List<TaxiStandDM> locationDMList, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
-        Gson gson = new Gson();
         Type listOfLocation = new TypeToken<List<TaxiStandDM>>(){}.getType();
         String locationsData = gson.toJson(locationDMList, listOfLocation);
         editor.putString(Constants.USER_LOCATIONS, locationsData);
@@ -199,7 +199,6 @@ public class UserPreferencesManager {
     public static List<TaxiStandDM> loadTaxiStands(Context context){
         SharedPreferences userPref = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String locations = userPref.getString(Constants.USER_LOCATIONS, "");
-        Gson gson = new Gson();
         Type listOfLocation = new TypeToken<List<TaxiStandDM>>(){}.getType();
         List<TaxiStandDM> locationsData = gson.fromJson(locations, listOfLocation);
         return locationsData;
@@ -234,7 +233,7 @@ public class UserPreferencesManager {
     public static void setAssignedTaxi(TaxiDetailsDM taxi, Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         SharedPreferences.Editor editor = userPrefs.edit();
-        Gson gson = new Gson();
+
         Type taxiType = new TypeToken<TaxiDetailsDM>(){}.getType();
         String taxiInfo = gson.toJson(taxi,taxiType);
         editor.putString(Constants.ASSIGNED_TAXI, taxiInfo);
@@ -245,7 +244,6 @@ public class UserPreferencesManager {
     public static TaxiDetailsDM getAssignedTaxi(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         String taxiInfo = userPrefs.getString(Constants.ASSIGNED_TAXI, "");
-        Gson gson = new Gson();
         Type taxiType = new TypeToken<TaxiDetailsDM>(){}.getType();
         TaxiDetailsDM taxi = gson.fromJson(taxiInfo, taxiType);
         return taxi;

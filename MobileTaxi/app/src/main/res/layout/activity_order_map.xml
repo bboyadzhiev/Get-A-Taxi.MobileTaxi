@@ -17,13 +17,29 @@
         android:name="com.google.android.gms.maps.SupportMapFragment" />
 
     <!-- Cancel Order button -->
-    <Button
-        android:id="@+id/btn_cancel_order"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/cancel_order_txt" />
+        >
+        <Button
+            android:id="@+id/btn_pickup_order"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_weight="1"
+            android:text="@string/pickup_order_txt" />
+        <Button
+            android:id="@+id/btn_cancel_order"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_weight="1"
+            android:text="@string/cancel_order_txt" />
+    </LinearLayout>
     <Button
         android:id="@+id/btn_place_order"
         android:layout_width="wrap_content"

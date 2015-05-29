@@ -259,10 +259,11 @@ public class UserPreferencesManager {
     public static boolean hasAssignedTaxi(Context context){
         SharedPreferences userPrefs = context.getSharedPreferences(USER_LOGIN_INFO, 0);
         int assignedId = userPrefs.getInt(Constants.ASSIGNED_TAXI_ID, -1);
-        if(assignedId != -1 ){
+        if(assignedId == -1 ){
+            return false;
+        } else {
             return true;
         }
-        return false;
     }
 
 }

@@ -100,6 +100,7 @@ public class SignalROrdersService extends Service {
         // TODO: IGNORE, USE REST CLIENT FOR THIS
         proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<JsonElement[]>() {
             @Override
+            @Deprecated
             public void run(JsonElement[] ordersList) {
                 Log.d("SignalROrdersService", Constants.HUB_UPDATE_ORDERS_LIST);
                 List<String> asd = new ArrayList<String>();
@@ -108,56 +109,12 @@ public class SignalROrdersService extends Service {
                     asd.add(e.toString());
                 }
 
-                String ordersString = asd.toString();
-                broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
-                broadcastIntent.putExtra(Constants.HUB_UPDATE_ORDERS_LIST, ordersString);
-                sendBroadcast(broadcastIntent);
-            }
-        }, JsonElement[].class);
-
-//        proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<JSONArray>() {
-//            @Override
-//            public void run(JSONArray ordersList) {
-//                Log.d("SignalROrdersService", Constants.HUB_UPDATE_ORDERS_LIST);
-//
-//
-//                String ordersString = ordersList.toString();
-//                Log.d("SignalROrdersService", ordersString);
+//                String ordersString = asd.toString();
 //                broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
 //                broadcastIntent.putExtra(Constants.HUB_UPDATE_ORDERS_LIST, ordersString);
 //                sendBroadcast(broadcastIntent);
-//            }
-//        }, JSONArray.class);
-
-
-//        proxy.on(Constants.HUB_UPDATE_ORDERS_LIST, new SubscriptionHandler1<JSONArray>() {
-//            @Override
-//            public void run(JSONArray ordersJASONArray) {
-//                Log.d("SignalROrdersService", ordersJASONArray.toString());
-//
-//                Gson gson = new Gson();
-//                Type type = new TypeToken<JSONArray>(){}.getType();
-//                String serialized = gson.toJson(ordersJASONArray,type);
-//
-//                broadcastIntent = new Intent(Constants.HUB_ORDERS_UPDATED_BC);
-//                broadcastIntent.putExtra(Constants.HUB_UPDATE_ORDERS_LIST, serialized);;
-//                sendBroadcast(broadcastIntent);
-//            }
-//        }, JSONArray.class);
-//        proxy.on(Constants.HUB_ADDED_ORDER, new SubscriptionHandler1<OrderDetailsDM>() {
-//            @Override
-//            public void run(OrderDetailsDM order) {
-//                Log.d("SignalROrdersService", Constants.HUB_ADDED_ORDER);
-//
-//                Gson gson = new Gson();
-//                Type type = new TypeToken<OrderDetailsDM>(){}.getType();
-//                String serialized = gson.toJson(order,type);
-//
-//                broadcastIntent = new Intent(Constants.HUB_ADDED_ORDER_BC);
-//                broadcastIntent.putExtra(Constants.HUB_ADDED_ORDER, serialized);
-//                sendBroadcast(broadcastIntent);
-//            }
-//        }, OrderDetailsDM.class);
+            }
+        }, JsonElement[].class);
 
         proxy.on(Constants.HUB_ADDED_ORDER, new SubscriptionHandler1<JsonElement>() {
             @Override
@@ -165,7 +122,9 @@ public class SignalROrdersService extends Service {
                 Log.d("SignalROrdersService", Constants.HUB_ADDED_ORDER);
                 broadcastIntent = new Intent(Constants.HUB_ADDED_ORDER_BC);
                 broadcastIntent.putExtra(Constants.HUB_ADDED_ORDER, order.toString());
-                sendBroadcast(broadcastIntent);
+                //sendBroadcast(broadcastIntent);
+                sendOrderedBroadcast(broadcastIntent, null);
+
             }
         }, JsonElement.class);
 
@@ -183,7 +142,6 @@ public class SignalROrdersService extends Service {
             @Override
             public void run(JsonElement order) {
                 Log.d("SignalROrdersService", Constants.HUB_UPDATED_ORDER);
-
                 broadcastIntent = new Intent(Constants.HUB_UPDATED_ORDER_BC);
                 broadcastIntent.putExtra(Constants.HUB_UPDATED_ORDER, order.toString());
                 sendBroadcast(broadcastIntent);

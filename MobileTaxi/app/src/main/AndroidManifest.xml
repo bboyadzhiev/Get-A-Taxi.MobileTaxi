@@ -76,6 +76,11 @@
             android:name=".comm.SignalROrdersService"
             android:exported="false"
             />
+        <receiver android:name=".utils.OrdersNotificationReceiver">
+            <intent-filter>
+                <action android:name= "com.getataxi.mobiletaxi.utilsaddedOrder" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

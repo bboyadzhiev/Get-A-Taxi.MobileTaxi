@@ -80,7 +80,8 @@ public class StartupActivity extends Activity {
             // Check if still logged-in
             if(UserPreferencesManager.isLoggedIn(context) && !UserPreferencesManager.tokenHasExpired(loginUserDM.expires)){
 
-                if(UserPreferencesManager.hasAssignedTaxi(context)){
+                boolean hasAssignedTaxi = UserPreferencesManager.hasAssignedTaxi(context);
+                if(hasAssignedTaxi){
                     Intent orderMap = new Intent(context, OrderAssignmentActivity.class);
                     orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(orderMap);

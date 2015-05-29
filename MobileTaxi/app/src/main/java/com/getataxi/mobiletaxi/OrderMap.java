@@ -29,7 +29,6 @@ import com.getataxi.mobiletaxi.comm.models.OrderDM;
 import com.getataxi.mobiletaxi.comm.models.OrderDetailsDM;
 import com.getataxi.mobiletaxi.comm.models.TaxiDetailsDM;
 import com.getataxi.mobiletaxi.utils.Constants;
-import com.getataxi.mobiletaxi.utils.LocationService;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -209,10 +208,6 @@ public class OrderMap extends ActionBarActivity {
             toggleButton(ButtonType.Place);
         }
 
-//        // Start location service
-//        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-//        context.startService(locationService);
-
         IntentFilter filter = new IntentFilter();
         // Register for Location Service broadcasts
         filter.addAction(Constants.LOCATION_UPDATED);
@@ -238,10 +233,6 @@ public class OrderMap extends ActionBarActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-//        //Stop location service
-//        Intent locationService = new Intent(OrderMap.this, LocationService.class);
-//        stopService(locationService);
 
         // Stop tracking service
         Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
@@ -371,12 +362,6 @@ public class OrderMap extends ActionBarActivity {
                         showProgress(false);
                     }
                 });
-
-                if (!trackingEnabled) {
-                    // Stop location service
-                    Intent stopLocationServiceIntent = new Intent(OrderMap.this, LocationService.class);
-                    context.stopService(stopLocationServiceIntent);
-                }
 
             }
         });
@@ -786,8 +771,6 @@ public class OrderMap extends ActionBarActivity {
     private Marker updateMarker(Marker marker, LatLng location, String title, boolean animate ){
         if(animate) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
-
-
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(location)      // Sets the center of the map to location user
                     .zoom(Constants.MAP_ANIMATION_ZOOM)                   // Sets the zoom
@@ -796,8 +779,8 @@ public class OrderMap extends ActionBarActivity {
                     .build();                   // Creates a CameraPosition from the builder
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
-        if (marker == null){
 
+        if (marker == null){
             MarkerOptions markerOpts = new MarkerOptions()
                     .position(location)
                     .icon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi))
@@ -809,6 +792,7 @@ public class OrderMap extends ActionBarActivity {
             marker.setTitle(title);
             animateMarker(marker, location, false);
         }
+
         marker.showInfoWindow();
         return marker;
     }

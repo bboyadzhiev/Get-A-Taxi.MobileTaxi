@@ -3,14 +3,19 @@ package com.getataxi.mobiletaxi;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Build;
+import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,6 +34,7 @@ import com.getataxi.mobiletaxi.fragments.OrderDetailsFragment;
 import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
 import com.getataxi.mobiletaxi.utils.Constants;
 import com.getataxi.mobiletaxi.utils.LocationService;
+import com.getataxi.mobiletaxi.utils.OrdersNotificationReceiver;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -72,6 +78,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     Context context = this;
     Gson gson;
     DistanceComparator distanceComparator;
+    private AlarmManager mgr=null;
+    private PendingIntent pi=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +88,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
         orderDetailsFragment = (OrderDetailsFragment)getFragmentManager()
                 .findFragmentById(R.id.orderDetailsFragment);
+
         getFragmentManager().beginTransaction().hide(orderDetailsFragment).commit();
+
+
 
         ordersListView = (ListView) this.findViewById(R.id.orders_list_view);
 
@@ -111,7 +122,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 sendBroadcast(stopOrdersService);
 
                 Intent orderMap = new Intent(context, OrderMap.class);
-                orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                //orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(orderMap);
             }
         });
@@ -122,17 +133,37 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             e.printStackTrace();
         }
 
-        if(UserPreferencesManager.hasAssignedOrder(context)){
-            // If still active order, goes directly to order map
-            checkForActiveOrder();
-        } else {
-            getDistrictOrders();
-        }
+
+
+        orderNotificationReceiver();
+    }
+
+    private void orderNotificationReceiver() {
+//        ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
+//                .cancelAll();
+//
+//        mgr=(AlarmManager)getSystemService(Context.ALARM_SERVICE);
+//
+//        Intent i=new Intent(this, SignalROrdersService.class);
+//
+//        pi=PendingIntent.getService(this, 0, i, 0);
+//
+//        cancelAlarm(null);
+//
+//        mgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+//                SystemClock.elapsedRealtime()+1000,
+//                5000,
+//                pi);
+    }
+
+    public void cancelAlarm(View v) {
+        mgr.cancel(pi);
     }
 
     @Override
     protected void onStart(){
         super.onStart();
+        Log.d("MYDEBUG", Constants.HUB_ADDED_ORDER_BC);
     }
 
     @Override
@@ -143,7 +174,18 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 .setDateFormat(Constants.GSON_DATE_FORMAT)
                 .create();
 
+        // Cancel all notifications
+        ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
+                .cancelAll();
+
         distanceComparator = new DistanceComparator();
+
+        if(UserPreferencesManager.hasAssignedOrder(context)){
+            // If still active order, goes directly to order map
+            checkForActiveOrder();
+        } else {
+            getDistrictOrders();
+        }
 
         // Start location service
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
@@ -157,6 +199,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         filter.addAction(Constants.HUB_CANCELLED_ORDER_BC);
         filter.addAction(Constants.HUB_UPDATED_ORDER_BC);
         filter.addAction(Constants.LOCATION_UPDATED);
+
         // And broadcasts receiver
         registerReceiver(broadcastsReceiver, filter);
         initiateOrdersTracking();
@@ -167,11 +210,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     protected void onPause(){
         super.onPause();
 
-        // Stop tracking service
-        Intent stopOrdersService = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
-        stopService(stopOrdersService);
 
-        UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
+        ///UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
+        unregisterReceiver(broadcastsReceiver);
     }
 
     @Override
@@ -186,14 +227,25 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     protected void onDestroy() {
         super.onDestroy();
 
-
         //Stop location service
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
         stopService(locationService);
 
-        unregisterReceiver(broadcastsReceiver);
+        // Stop tracking service
+        Intent stopOrdersService = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
+        stopService(stopOrdersService);
+
     }
 
+    // ORDERS TRACKING SERVICE
+    protected void initiateOrdersTracking(){
+        Intent ordersTrackingIntent = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
+        ordersTrackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
+        ordersTrackingIntent.putExtra(Constants.DISTRICT_ID, UserPreferencesManager.getDistrictId(context));
+        startService(ordersTrackingIntent);
+    }
+
+    // BROADCAST RECEIVER
     private final BroadcastReceiver broadcastsReceiver = new BroadcastReceiver() {
 
         @Override
@@ -217,13 +269,13 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             // ORDERS HUB
             if (action.equals(Constants.HUB_ORDERS_UPDATED_BC)) {
                 if(true) return;
-                String ordersString = intent.getStringExtra(Constants.HUB_UPDATE_ORDERS_LIST);
-
-                Type listOfOrders = new TypeToken<List<OrderDetailsDM>>(){}.getType();
-                List<OrderDetailsDM> ordersData = gson.fromJson(ordersString, listOfOrders);
-                orders.clear();
-                orders.addAll(ordersData);
-                updateOrdersListView();
+//                String ordersString = intent.getStringExtra(Constants.HUB_UPDATE_ORDERS_LIST);
+//
+//                Type listOfOrders = new TypeToken<List<OrderDetailsDM>>(){}.getType();
+//                List<OrderDetailsDM> ordersData = gson.fromJson(ordersString, listOfOrders);
+//                orders.clear();
+//                orders.addAll(ordersData);
+//                updateOrdersListView();
             }
 
             if(action.equals(Constants.HUB_ADDED_ORDER_BC)){
@@ -244,6 +296,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     while (itr.hasNext()){
                         OrderDM element = itr.next();
                         if(element.orderId == cancelledOrderId) {
+                            if(selectedOrderId == cancelledOrderId) {
+                                invalidateSelectedOrder();
+                            }
                             itr.remove();
                         }
                     }
@@ -268,11 +323,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
                 Type type = new TypeToken<OrderDetailsDM>(){}.getType();
                 OrderDetailsDM order = gson.fromJson(orderString, type);
-
-                OrderDM orderDM = fromOrderDetailsDM(order);
-
                 for(OrderDM ord: orders){
                     if(ord.orderId == order.orderId){
+                        OrderDM orderDM = fromOrderDetailsDM(order);
                         updateOrderDM(ord, orderDM);
                     }
                 }
@@ -297,15 +350,15 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     }
                 }
             }
+
+            abortBroadcast();
         }
     };
 
-    // ORDERS TRACKING SERVICE
-    protected void initiateOrdersTracking(){
-        Intent ordersTrackingIntent = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
-        ordersTrackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
-        ordersTrackingIntent.putExtra(Constants.DISTRICT_ID, UserPreferencesManager.getDistrictId(context));
-        startService(ordersTrackingIntent);
+    private void invalidateSelectedOrder(){
+        selectedOrderId = -1;
+        assignButton.setEnabled(false);
+        getFragmentManager().beginTransaction().hide(orderDetailsFragment).commit();
     }
 
     private void updateOrdersListView() {
@@ -326,6 +379,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 ordersListView.setVisibility(View.INVISIBLE);
             }
         }
+    }
+
+    public void disableAssignButton(){
+        assignButton.setEnabled(false);
     }
 
     public class DistanceComparator implements Comparator<OrderDM> {
@@ -397,6 +454,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     }
 
     private void assignSelectedOrder(){
+        if(selectedOrderId == -1) return;
+
         showProgress(true);
         RestClientManager.assignOrder(selectedOrderId, context, new Callback<OrderDetailsDM>() {
             @Override
@@ -447,7 +506,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_order_unassign_taxi) {
             showProgress(true);
+
             if (UserPreferencesManager.hasAssignedOrder(context)) {
+                int assignedOrderId = UserPreferencesManager.getLastOrderId(context);
                 return true;
             }
 
@@ -488,6 +549,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             finish();
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 

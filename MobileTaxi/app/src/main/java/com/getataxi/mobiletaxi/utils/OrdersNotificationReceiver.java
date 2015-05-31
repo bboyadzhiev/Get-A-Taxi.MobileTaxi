@@ -38,8 +38,9 @@ public class OrdersNotificationReceiver extends BroadcastReceiver {
 
             NotificationManager mgr =
                     (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            String title = context.getResources().getString(R.string.new_order_notification_title);
             Notification note = new Notification(R.mipmap.person,
-                    "New order available!",
+                    title,
                     System.currentTimeMillis());
             PendingIntent i = PendingIntent.getActivity(context, 0,
                     new Intent(context, OrderAssignmentActivity.class),

@@ -16,7 +16,7 @@ public class LoginUserDM {
     @SerializedName("expires_in")
     public String expires_in;
 
-    @SerializedName("username")
+    @SerializedName("userName")
     public String userName;
 
     @SerializedName("email")
@@ -28,6 +28,4 @@ public class LoginUserDM {
     @SerializedName(".expires")
     public String expires;
 
-    @SerializedName("token")
-    public String token;
 }

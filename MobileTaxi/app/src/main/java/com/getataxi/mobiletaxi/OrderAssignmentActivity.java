@@ -81,6 +81,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     private AlarmManager mgr=null;
     private PendingIntent pi=null;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,9 +134,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             e.printStackTrace();
         }
 
-
-
-        orderNotificationReceiver();
     }
 
     private void orderNotificationReceiver() {
@@ -163,7 +161,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     @Override
     protected void onStart(){
         super.onStart();
-        Log.d("MYDEBUG", Constants.HUB_ADDED_ORDER_BC);
     }
 
     @Override
@@ -180,13 +177,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
         distanceComparator = new DistanceComparator();
 
-        if(UserPreferencesManager.hasAssignedOrder(context)){
-            // If still active order, goes directly to order map
-            checkForActiveOrder();
-        } else {
-            getDistrictOrders();
-        }
-
         // Start location service
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
         context.startService(locationService);
@@ -202,6 +192,14 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
         // And broadcasts receiver
         registerReceiver(broadcastsReceiver, filter);
+
+        if(UserPreferencesManager.hasAssignedOrder(context)){
+            // If still active order, goes directly to order map
+            checkForActiveOrder();
+        } else {
+            getDistrictOrders();
+        }
+
         initiateOrdersTracking();
 
     }
@@ -231,9 +229,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
         stopService(locationService);
 
-        // Stop tracking service
-        Intent stopOrdersService = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
-        stopService(stopOrdersService);
+        disableOrdersTracking();
 
     }
 
@@ -243,6 +239,12 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         ordersTrackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
         ordersTrackingIntent.putExtra(Constants.DISTRICT_ID, UserPreferencesManager.getDistrictId(context));
         startService(ordersTrackingIntent);
+    }
+
+    private void disableOrdersTracking(){
+        // Stop orders tracking service
+        Intent stopOrdersService = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
+        stopService(stopOrdersService);
     }
 
     // BROADCAST RECEIVER
@@ -502,13 +504,76 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        if (id == R.id.action_switch_duty) {
 
-        //noinspection SimplifiableIfStatement
+            if (UserPreferencesManager.hasAssignedOrder(context)) {
+                Toast.makeText(context, R.string.in_order_assignment, Toast.LENGTH_LONG).show();
+                return true;
+            }
+
+            if(assignedTaxi.onDuty != assignedTaxi.isAvailable){
+                Toast.makeText(context, R.string.bad_state, Toast.LENGTH_LONG).show();
+                return true;
+            }
+
+            final boolean onDuty = assignedTaxi.onDuty;
+
+            // invert taxi status in model
+            if(onDuty){
+                assignedTaxi.onDuty = false;
+                assignedTaxi.isAvailable = false;
+            } else  {
+                assignedTaxi.onDuty = true;
+                assignedTaxi.isAvailable = true;
+            }
+
+            showProgress(true);
+
+            item.setChecked(!item.isChecked());
+
+            // TODO FINISH !!!!!!!!
+            // send the new status
+            RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Object>() {
+                @Override
+                public void success(Object o, Response response) {
+                    int status = response.getStatus();
+                    if (status == HttpStatus.SC_OK) {
+                        //if all went fine update
+                        if(onDuty) {
+                            setTaxiDutyStatus(false);
+                            Toast.makeText(context, R.string.now_off_duty, Toast.LENGTH_LONG).show();
+                        } else {
+                            setTaxiDutyStatus(true);
+                            Toast.makeText(context, R.string.now_on_duty, Toast.LENGTH_LONG).show();
+                        }
+
+                    }
+                    if (status == HttpStatus.SC_BAD_REQUEST) {
+                        Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    }
+
+                    if (status == HttpStatus.SC_NOT_FOUND) {
+                        Toast.makeText(context, response.getBody().toString(), Toast.LENGTH_LONG).show();
+                    }
+
+                    showProgress(false);
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    showToastError(error);
+                    showProgress(false);
+                }
+            });
+
+            return true;
+        }
+
         if (id == R.id.action_order_unassign_taxi) {
             showProgress(true);
 
             if (UserPreferencesManager.hasAssignedOrder(context)) {
-                int assignedOrderId = UserPreferencesManager.getLastOrderId(context);
+                Toast.makeText(context, R.string.in_order_assignment, Toast.LENGTH_LONG).show();
                 return true;
             }
 
@@ -553,6 +618,19 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         return super.onOptionsItemSelected(item);
     }
 
+    private void setTaxiDutyStatus(boolean onDuty) {
+        assignedTaxi.isAvailable = onDuty;
+        assignedTaxi.onDuty = onDuty;
+        UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
+        if(onDuty){
+            initiateOrdersTracking();
+        } else {
+            disableOrdersTracking();
+        }
+    }
+
+
+    // ORDERS LIST
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 

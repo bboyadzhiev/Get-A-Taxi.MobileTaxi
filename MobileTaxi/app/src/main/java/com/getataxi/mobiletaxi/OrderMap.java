@@ -70,6 +70,7 @@ public class OrderMap extends ActionBarActivity {
     private Marker destinationLocationMarker;
 
     private TaxiDetailsDM taxi;
+
     private Marker taxiLocationMarker;
     private boolean trackingEnabled;
     private Button cancelOrderButton;
@@ -125,11 +126,8 @@ public class OrderMap extends ActionBarActivity {
 
                 if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
-                    placeDriverOrderButton.setEnabled(true);
+                    placeDriverOrderButton.setEnabled(taxi.onDuty);
                 }
-
-
-
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
                 // Client location change
 
@@ -196,16 +194,15 @@ public class OrderMap extends ActionBarActivity {
                 new LatLng(taxi.latitude, taxi.longitude),
                 taxi.plate, true);
         taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi));
+
         hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
         if(hasAssignedOrder) {
             assignedOrderId = UserPreferencesManager.getLastOrderId(context);
             getAssignedOrder();
-        }
-
-        if(hasAssignedOrder) {
             toggleButton(ButtonType.Cancel);
         } else {
             toggleButton(ButtonType.Place);
+            placeDriverOrderButton.setEnabled(taxi.onDuty);
         }
 
         IntentFilter filter = new IntentFilter();
@@ -655,6 +652,8 @@ public class OrderMap extends ActionBarActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+
+
         if(id == R.id.action_order_assignment && !hasAssignedOrder){
             Intent intent = new Intent(context, OrderAssignmentActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -692,6 +691,7 @@ public class OrderMap extends ActionBarActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
 
     // MAP ROUTINES
     /**

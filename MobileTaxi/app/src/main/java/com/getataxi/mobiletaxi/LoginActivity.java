@@ -226,8 +226,6 @@ public class LoginActivity extends ActionBarActivity implements LoaderManager.Lo
                             UserPreferencesManager.saveLoginData(responseLoginUserDM, context);
                             Thread.sleep(2000);
                             showProgress(false);
-                            Toast.makeText(context, "Login data stored!", Toast.LENGTH_LONG).show();
-                            // TODO: REVIEW
                             Intent taxiAssignmentActivity = new Intent(context, TaxiAssignmentActivity.class);
                             taxiAssignmentActivity.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(taxiAssignmentActivity);

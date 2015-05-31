@@ -11,4 +11,7 @@
     <string name="no_taxies">No taxies available!</string>
 
     <string name="action_logout" >Logout</string>
+    <string name="Taxi">Taxi</string>
+    <string name="taxi_plate_detail_txt">Taxi\'s Plate</string>
+    <string name="taxi_id_detail_txt">Taxi\'s ID</string>
 </resources>

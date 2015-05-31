@@ -156,7 +156,7 @@ public class UserPreferencesManager {
     public static String getToken(Context context){
 
         LoginUserDM userInfo = getLoginData(context);
-        return userInfo.token;
+        return userInfo.accessToken;
     }
 
     public static String getEmail(Context context){

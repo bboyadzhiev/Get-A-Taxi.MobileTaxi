@@ -1,24 +1,64 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
     tools:context="com.getataxi.mobiletaxi.fragments.TaxiesListFragment">
 
     <TextView
-        android:id="@+id/taxiIdDetail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="Taxi Id"
-        android:textSize="20sp" />
-
-    <TextView
-        android:id="@+id/taxiPlateDetail"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/taxi_details_txt"
+        android:textSize="20sp"
+        />
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="TAXI PLATE"
-        android:textSize="15sp" />
+        android:orientation="horizontal"
+        >
+        <TextView
+            android:id="@+id/taxiIdDetailText"
+            android:layout_width="0px"
+            android:layout_weight="4"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/taxi_id_detail_txt"
+            android:textSize="20sp" />
+        <Space
+            android:layout_width="15sp"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:id="@+id/taxiIdDetail"
+            android:layout_width="0px"
+            android:layout_weight="4"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:textSize="20sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/taxiPlateDetailText"
+            android:layout_width="0px"
+            android:layout_weight="4"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/taxi_plate_detail_txt"
+            android:textSize="20sp" />
+        <Space
+            android:layout_width="15sp"
+            android:layout_height="wrap_content" />
 
+        <TextView
+            android:id="@+id/taxiPlateDetail"
+            android:layout_width="0px"
+            android:layout_weight="4"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:textSize="20sp" />
+
+    </LinearLayout>
 </LinearLayout>

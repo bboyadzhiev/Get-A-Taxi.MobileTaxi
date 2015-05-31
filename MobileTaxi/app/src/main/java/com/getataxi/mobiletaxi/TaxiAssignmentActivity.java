@@ -75,8 +75,6 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
             }
         });
 
-
-
     }
 
     private void populateTaxiesList() {
@@ -157,6 +155,8 @@ public class TaxiAssignmentActivity extends ActionBarActivity  implements
             }
         });
     }
+
+
 
    public void logoutDriver(){
        UserPreferencesManager.clearLoginData(context);

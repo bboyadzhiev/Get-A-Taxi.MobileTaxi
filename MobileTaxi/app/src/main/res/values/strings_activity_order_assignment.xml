@@ -13,4 +13,7 @@
     <string name="client_comment_txt">Comment:</string>
     <string name="order_details_txt">Client order details</string>
     <string name="no_comment">- no comment -</string>
+    <string name="switch_duty_txt">On duty</string>
+    <string name="now_off_duty">You are now off-duty!</string>
+    <string name="bad_state">Taxi state incorrect!</string>
 </resources>

@@ -391,6 +391,8 @@ public class OrderMap extends ActionBarActivity {
                                 UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
                                 assignedOrderId = orderDetailsDM.orderId;
                                 hasAssignedOrder = true;
+                                taxi.onDuty = true;
+                                taxi.isAvailable = false;
                                 toggleButton(ButtonType.Finish);
                             }
                             showProgress(false);
@@ -648,8 +650,8 @@ public class OrderMap extends ActionBarActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_order_map, menu);
-        menu.findItem(R.id.action_order_assignment).setEnabled(hasAssignedOrder);
-        menu.findItem(R.id.action_release_taxi).setEnabled(hasAssignedOrder);
+        menu.findItem(R.id.action_order_assignment).setEnabled(!hasAssignedOrder);
+        menu.findItem(R.id.action_release_taxi).setEnabled(!hasAssignedOrder);
 
         return true;
     }
@@ -778,17 +780,6 @@ public class OrderMap extends ActionBarActivity {
     }
 
     private Marker updateMarker(Marker marker, LatLng location, String title, boolean animate ){
-        if(animate) {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(location)      // Sets the center of the map to location user
-                    .zoom(Constants.MAP_ANIMATION_ZOOM)                   // Sets the zoom
-                            //   .bearing(90)   // Sets the orientation of the camera to east
-                            //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
-                    .build();                   // Creates a CameraPosition from the builder
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        }
-
         if (marker == null){
             MarkerOptions markerOpts = new MarkerOptions()
                     .position(location)
@@ -801,7 +792,16 @@ public class OrderMap extends ActionBarActivity {
             marker.setTitle(title);
             animateMarker(marker, location, false);
         }
-
+        if(animate) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(location)      // Sets the center of the map to location user
+                    .zoom(Constants.MAP_ANIMATION_ZOOM)                   // Sets the zoom
+                            //   .bearing(90)   // Sets the orientation of the camera to east
+                            //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
+                    .build();                   // Creates a CameraPosition from the builder
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
         marker.showInfoWindow();
         return marker;
     }

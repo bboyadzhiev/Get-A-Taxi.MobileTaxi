@@ -14,8 +14,8 @@ public final class Constants {
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
     //public static final String DEFAULT_URL = "http://192.168.50.112:14938";
-    public static final String DEFAULT_URL = "http://192.168.43.245:14938";
-    //public static final String DEFAULT_URL = "http://172.16.250.145:14938";
+    //public static final String DEFAULT_URL = "http://192.168.43.245:14938";
+    public static final String DEFAULT_URL = "http://172.16.250.145:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
 
@@ -31,6 +31,7 @@ public final class Constants {
     public static final String TRACKING_HUB_PROXY = "trackingHub";
     public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+    public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
     // Hub broadcasts
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
 
@@ -89,8 +90,9 @@ public final class Constants {
     public static final String LOCATION_ACCURACY = PACKAGE_NAME + ".LOCATION_ACCURACY";
     public static final float LOCATION_ACCURACY_THRESHOLD = 20; // meters
 
+    // Report location on change threshold
+    public static final float LOCATION_REST_REPORT_THRESHOLD = 200;
 
-    public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
 
 
 

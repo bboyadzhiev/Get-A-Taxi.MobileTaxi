@@ -65,6 +65,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
     private TaxiDetailsDM assignedTaxi;
     private Location taxiDriverLocation;
+    private Location lastLocation;
 
     private TextView orderAddressTxt;
     private TextView orderDestinationTxt;
@@ -259,13 +260,20 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 // Client location change
                 Bundle data = intent.getExtras();
 
+
                 taxiDriverLocation = data.getParcelable(Constants.LOCATION);
 
                 // Update taxi location too
                 assignedTaxi.latitude = taxiDriverLocation.getLatitude();
                 assignedTaxi.longitude = taxiDriverLocation.getLongitude();
                 updateOrdersListView();
-
+                if(lastLocation == null) {
+                    lastLocation = taxiDriverLocation;
+                    updateTaxiDetails();
+                } else if(lastLocation.distanceTo(taxiDriverLocation) > Constants.LOCATION_REST_REPORT_THRESHOLD){
+                    lastLocation = taxiDriverLocation;
+                    updateTaxiDetails();
+                }
             }
 
             // ORDERS HUB
@@ -353,9 +361,27 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 }
             }
 
-            abortBroadcast();
+           // abortBroadcast();
         }
     };
+
+    private void updateTaxiDetails() {
+        if(!assignedTaxi.onDuty){
+            return;
+        }
+
+        RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Object>() {
+            @Override
+            public void success(Object o, Response response) {
+                Log.d(getClass().getName(), "Taxi location reported!");
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.d(getClass().getName(), "Taxi location report ERROR!");
+            }
+        });
+    }
 
     private void invalidateSelectedOrder(){
         selectedOrderId = -1;
@@ -495,6 +521,12 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_order_assignment, menu);
+        if(assignedTaxi.onDuty){
+            menu.findItem(R.id.action_switch_duty).setChecked(true);
+        } else {
+            menu.findItem(R.id.action_switch_duty).setChecked(false);
+        }
+
         return true;
     }
 
@@ -511,15 +543,18 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 return true;
             }
 
-            if(assignedTaxi.onDuty != assignedTaxi.isAvailable){
-                Toast.makeText(context, R.string.bad_state, Toast.LENGTH_LONG).show();
-                return true;
-            }
 
-            final boolean onDuty = assignedTaxi.onDuty;
+//            if(assignedTaxi.onDuty != assignedTaxi.isAvailable){
+//                if(UserPreferencesManager.hasAssignedOrder(context)) {
+//                    Toast.makeText(context, R.string.bad_state, Toast.LENGTH_LONG).show();
+//                    return true;
+//                }
+//            }
+
+            final boolean previousState = assignedTaxi.onDuty;
 
             // invert taxi status in model
-            if(onDuty){
+            if(previousState){
                 assignedTaxi.onDuty = false;
                 assignedTaxi.isAvailable = false;
             } else  {
@@ -539,8 +574,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                     int status = response.getStatus();
                     if (status == HttpStatus.SC_OK) {
                         //if all went fine update
-                        if(onDuty) {
+                        if(previousState) {
                             setTaxiDutyStatus(false);
+
                             Toast.makeText(context, R.string.now_off_duty, Toast.LENGTH_LONG).show();
                         } else {
                             setTaxiDutyStatus(true);

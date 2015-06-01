@@ -118,6 +118,7 @@ public class SignalRTrackingService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        connection.stop();
         unregisterReceiver(locationReceiver);
     }
 

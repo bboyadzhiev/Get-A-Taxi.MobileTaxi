@@ -62,6 +62,7 @@ public class OrderMap extends ActionBarActivity {
 
     private Location taxiDriverLocation;
     private Location clientLocation;
+    private Location lastLocation;
 
     // Initialized by the broadcast receiver
     //private LocationDM currentReverseGeocodedLocation = null;
@@ -127,6 +128,13 @@ public class OrderMap extends ActionBarActivity {
                 if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
                     placeDriverOrderButton.setEnabled(taxi.onDuty);
+                }
+                if(lastLocation == null) {
+                    lastLocation = taxiDriverLocation;
+                    reportTaxiStatus(taxi);
+                } else if(lastLocation.distanceTo(taxiDriverLocation) > Constants.LOCATION_REST_REPORT_THRESHOLD){
+                    lastLocation = taxiDriverLocation;
+                    reportTaxiStatus(taxi);
                 }
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
                 // Client location change
@@ -419,7 +427,7 @@ public class OrderMap extends ActionBarActivity {
                             clearStoredOrder();
                             toggleButton(ButtonType.Place);
                             taxi.onDuty = true;
-                            taxi.isAvailable = false;
+                            taxi.isAvailable = true;
                             reportTaxiStatus(taxi);
                         }
                         showProgress(false);
@@ -603,7 +611,7 @@ public class OrderMap extends ActionBarActivity {
 
     private OrderDetailsDM prepareOrderDetails(OrderDetailsDM sourceOrderDM) {
         sourceOrderDM.orderId = -1; // Will be updated later by the server
-        if(taxiDriverLocation != null && sourceOrderDM.orderAddress != null && sourceOrderDM.orderAddress.isEmpty()) {
+        if(taxiDriverLocation != null) {
             sourceOrderDM.orderLatitude = taxiDriverLocation.getLatitude();
             sourceOrderDM.orderLongitude = taxiDriverLocation.getLongitude();
         }
@@ -619,10 +627,10 @@ public class OrderMap extends ActionBarActivity {
 
     private OrderDetailsDM completeOrderDetails(OrderDetailsDM sourceOrderDM) {
         sourceOrderDM.orderId = assignedOrderId; //UserPreferencesManager.getLastOrderId(context);
-        if(sourceOrderDM.destinationAddress != null && sourceOrderDM.destinationAddress.isEmpty()) {
+       // if(sourceOrderDM.destinationAddress != null && sourceOrderDM.destinationAddress.isEmpty()) {
             sourceOrderDM.destinationLatitude = taxiDriverLocation.getLatitude();
             sourceOrderDM.destinationLongitude = taxiDriverLocation.getLongitude();
-        }
+      //  }
         // Set to Finished
         sourceOrderDM.isWaiting = false;
         sourceOrderDM.isFinished = true;
@@ -642,6 +650,7 @@ public class OrderMap extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.menu_order_map, menu);
         menu.findItem(R.id.action_order_assignment).setEnabled(hasAssignedOrder);
         menu.findItem(R.id.action_release_taxi).setEnabled(hasAssignedOrder);
+
         return true;
     }
 

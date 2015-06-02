@@ -163,7 +163,7 @@ public class RestClientManager {
         ordersAPI.updateOrder(orderDM, callback);
     }
 
-    public static void cancelOrder(int id, Context context, Callback<OrderDM> callback){
+    public static void cancelOrder(int id, Context context, Callback<Integer> callback){
         List<NameValuePair> heads = new ArrayList<>();
         heads.addAll(getAuthorisationHeaders(context));
         TaxiOrdersAPI ordersAPI = client.getOrdersService(heads);
@@ -197,7 +197,7 @@ public class RestClientManager {
         taxiApi.assignTaxi(taxi, callback);
     }
 
-    public static void updateTaxi(TaxiDM taxi, Context context, Callback<Object> callback){
+    public static void updateTaxi(TaxiDM taxi, Context context, Callback<Integer> callback){
         TaxiAPI taxiApi = getTaxiAPI(context);
         taxiApi.updateTaxi(taxi, callback);
     }

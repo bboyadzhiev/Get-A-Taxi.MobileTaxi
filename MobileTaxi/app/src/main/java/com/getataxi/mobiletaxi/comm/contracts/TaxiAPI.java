@@ -32,7 +32,7 @@ public interface TaxiAPI {
     void assignTaxi(@Body TaxiDM taxiDM, Callback<TaxiDetailsDM> callback);
 
     @PUT("/api/Taxi")
-    void updateTaxi(@Body TaxiDM taxiDM, Callback<Object> callback);
+    void updateTaxi(@Body TaxiDM taxiDM, Callback<Integer> callback);
 
     @DELETE("/api/Taxi/{id}")
     void unassignTaxi(@Path("id") int id, Callback<Object> callback);

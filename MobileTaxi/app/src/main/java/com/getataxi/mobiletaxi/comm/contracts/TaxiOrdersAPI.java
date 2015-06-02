@@ -36,5 +36,5 @@ public interface TaxiOrdersAPI {
     void updateOrder(@Body OrderDetailsDM orderDM, Callback<OrderDetailsDM> callback);
 
     @DELETE("/api/TaxiOrders/{id}")
-    void cancelOrder(@Path("id") int id, Callback<OrderDM> callback);
+    void cancelOrder(@Path("id") int id, Callback<Integer> callback);
 }

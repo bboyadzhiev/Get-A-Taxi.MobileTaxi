@@ -22,10 +22,9 @@ public class OrderDetailsDM extends OrderDM {
     public String customerPhoneNumber;
     @SerializedName("orderedAt")
     public Date orderedAt;
-    @SerializedName("isWaiting")
-    public boolean isWaiting;
-    @SerializedName("isFinished")
-    public boolean isFinished;
+    @SerializedName("status")
+    public int status;
+
     @SerializedName("arrivalTime")
     public int arrivalTime;
     @SerializedName("bill")

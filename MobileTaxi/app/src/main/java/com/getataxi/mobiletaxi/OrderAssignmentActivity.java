@@ -366,13 +366,13 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     };
 
     private void updateTaxiDetails() {
-        if(!assignedTaxi.onDuty){
+        if(!((assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) || (assignedTaxi.status == Constants.TaxiStatus.Busy.getValue()))){
             return;
         }
 
-        RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Object>() {
+        RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Integer>() {
             @Override
-            public void success(Object o, Response response) {
+            public void success(Integer o, Response response) {
                 Log.d(getClass().getName(), "Taxi location reported!");
             }
 
@@ -461,7 +461,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             @Override
             public void success(OrderDetailsDM orderDetailsDM, Response response) {
                 showProgress(false);
-                if (orderDetailsDM.taxiId == assignedTaxi.taxiId && !orderDetailsDM.isFinished) {
+                if (orderDetailsDM.taxiId == assignedTaxi.taxiId && !(orderDetailsDM.status == Constants.OrderStatus.Finished.getValue())) {
                     // Still active order for this taxi
                     Toast.makeText(context, R.string.in_order_assignment, Toast.LENGTH_LONG).show();
                     Intent orderMap = new Intent(context, OrderMap.class);
@@ -521,7 +521,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_order_assignment, menu);
-        if(assignedTaxi.onDuty){
+        if((assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) || (assignedTaxi.status == Constants.TaxiStatus.Busy.getValue())){
             menu.findItem(R.id.action_switch_duty).setChecked(true);
         } else {
             menu.findItem(R.id.action_switch_duty).setChecked(false);
@@ -551,37 +551,43 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 //                }
 //            }
 
-            final boolean previousState = assignedTaxi.onDuty;
+            final int previousState = assignedTaxi.status;
 
             // invert taxi status in model
-            if(previousState){
-                assignedTaxi.onDuty = false;
-                assignedTaxi.isAvailable = false;
-            } else  {
-                assignedTaxi.onDuty = true;
-                assignedTaxi.isAvailable = true;
+            if(previousState == Constants.TaxiStatus.Available.getValue() || previousState == Constants.TaxiStatus.Busy.getValue()){
+                assignedTaxi.status = Constants.TaxiStatus.OffDuty.getValue();
+                item.setChecked(false);
+            } else {
+                assignedTaxi.status = Constants.TaxiStatus.Available.getValue();
+                item.setChecked(true);
             }
 
             showProgress(true);
 
-            item.setChecked(!item.isChecked());
+//            item.setChecked(!item.isChecked());
+
 
             // TODO FINISH !!!!!!!!
             // send the new status
-            RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Object>() {
+            RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Integer>() {
                 @Override
-                public void success(Object o, Response response) {
+                public void success(Integer newStatus, Response response) {
                     int status = response.getStatus();
                     if (status == HttpStatus.SC_OK) {
                         //if all went fine update
-                        if(previousState) {
-                            setTaxiDutyStatus(false);
-
+                        if(newStatus == Constants.TaxiStatus.Available.getValue()) {
+                            Toast.makeText(context, R.string.now_on_duty_available, Toast.LENGTH_LONG).show();
+                            taxiStatusChnaged(newStatus);
+                        } else if(newStatus == Constants.TaxiStatus.Busy.getValue()){
+                            Toast.makeText(context, R.string.now_on_duty_busy, Toast.LENGTH_LONG).show();
+                            taxiStatusChnaged(newStatus);
+                        } else if (newStatus == Constants.TaxiStatus.OffDuty.getValue()){
                             Toast.makeText(context, R.string.now_off_duty, Toast.LENGTH_LONG).show();
+                            taxiStatusChnaged(newStatus);
                         } else {
-                            setTaxiDutyStatus(true);
-                            Toast.makeText(context, R.string.now_on_duty, Toast.LENGTH_LONG).show();
+                            Toast.makeText(context, R.string.taxi_bad_state, Toast.LENGTH_LONG).show();
                         }
+
 
                     }
                     if (status == HttpStatus.SC_BAD_REQUEST) {
@@ -654,11 +660,9 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-    private void setTaxiDutyStatus(boolean onDuty) {
-        assignedTaxi.isAvailable = onDuty;
-        assignedTaxi.onDuty = onDuty;
+    private void taxiStatusChnaged(int status) {
         UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
-        if(onDuty){
+        if(status == Constants.TaxiStatus.Available.getValue() || status == Constants.TaxiStatus.Busy.getValue()){
             initiateOrdersTracking();
         } else {
             disableOrdersTracking();

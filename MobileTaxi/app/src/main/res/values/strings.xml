@@ -26,7 +26,6 @@
     <string name="pickup_order_txt">Pick up!</string>
     <string name="new_order_notification_title">New order available!</string>
     <string name="taxi_details_txt">Selected taxi details</string>
-    <string name="now_on_duty">You are now on duty!</string>
 
 
 </resources>

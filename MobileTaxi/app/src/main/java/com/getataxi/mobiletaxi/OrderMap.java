@@ -22,6 +22,7 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.getataxi.mobiletaxi.comm.RestClientManager;
 import com.getataxi.mobiletaxi.comm.SignalRTrackingService;
@@ -121,13 +122,13 @@ public class OrderMap extends ActionBarActivity {
                         latLng,
                         markerTitle, false
                 );
-                // Update taxi location too
+                // Update taxi location too sadasd
                 taxi.latitude = clientLat;
                 taxi.longitude = clientLon;
 
                 if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
-                    placeDriverOrderButton.setEnabled(taxi.onDuty);
+                    placeDriverOrderButton.setEnabled(isTaxiOnDuty());
                 }
                 if(lastLocation == null) {
                     lastLocation = taxiDriverLocation;
@@ -136,6 +137,9 @@ public class OrderMap extends ActionBarActivity {
                     lastLocation = taxiDriverLocation;
                     reportTaxiStatus(taxi);
                 }
+
+                checkPickupAvailability();
+
             } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
                 // Client location change
 
@@ -164,9 +168,32 @@ public class OrderMap extends ActionBarActivity {
                         true
                 );
 
+                checkPickupAvailability();
+
             }
         }
     };
+
+    private void checkPickupAvailability() {
+        if(hasAssignedOrder && clientOrderDM.status == Constants.OrderStatus.Waiting.getValue()){
+            if(clientLocation == null && clientOrderDM != null){
+                clientLocation = new Location("void");
+                clientLocation.setLatitude(clientOrderDM.orderLatitude);
+                clientLocation.setLongitude(clientOrderDM.orderLongitude);
+            }
+
+            if(taxiDriverLocation.distanceTo(clientLocation) < Constants.LOCATION_PICKUP_DISTANCE_THRESHOLD){
+                toggleButton(ButtonType.Pickup);
+            }
+        }
+    }
+
+    private boolean isTaxiOnDuty() {
+        if(taxi.status == Constants.TaxiStatus.Available.getValue() || taxi.status == Constants.TaxiStatus.Busy.getValue()){
+            return true;
+        }
+        return false;
+    }
 
 
     /**
@@ -210,7 +237,7 @@ public class OrderMap extends ActionBarActivity {
             toggleButton(ButtonType.Cancel);
         } else {
             toggleButton(ButtonType.Place);
-            placeDriverOrderButton.setEnabled(taxi.onDuty);
+            placeDriverOrderButton.setEnabled(isTaxiOnDuty());
         }
 
         IntentFilter filter = new IntentFilter();
@@ -262,8 +289,7 @@ public class OrderMap extends ActionBarActivity {
                 showProgress(true);
 
                 //set order in progress
-                clientOrderDM.isWaiting = false;
-                clientOrderDM.isFinished = false;
+                clientOrderDM.status = Constants.OrderStatus.InProgress.getValue();
                 RestClientManager.updateOrder(clientOrderDM, context, new Callback<OrderDetailsDM>() {
                     @Override
                     public void success(OrderDetailsDM orderDetailsDM, Response response) {
@@ -276,10 +302,8 @@ public class OrderMap extends ActionBarActivity {
                             assignedOrderId = orderDetailsDM.orderId;
                             hasAssignedOrder = true;
                             toggleButton(ButtonType.Finish);
-                            taxi.onDuty = true;
-                            taxi.isAvailable = false;
+                            taxi.status = Constants.TaxiStatus.Busy.getValue();
                             reportTaxiStatus(taxi);
-                            return;
                         }
 
                         showProgress(false);
@@ -325,9 +349,9 @@ public class OrderMap extends ActionBarActivity {
                 // TODO: finish
                 // int currentOrderId = UserPreferencesManager.getLastOrderId(context);
                 // Order in progress, try to cancel it
-                RestClientManager.cancelOrder(assignedOrderId, context, new Callback<OrderDM>() {
+                RestClientManager.cancelOrder(assignedOrderId, context, new Callback<Integer>() {
                     @Override
-                    public void success(OrderDM clientOrderDM, Response response) {
+                    public void success(Integer id, Response response) {
 
                         int status = response.getStatus();
 
@@ -335,11 +359,9 @@ public class OrderMap extends ActionBarActivity {
                             // Cancelled successfully
                             clearStoredOrder();
                             toggleButton(ButtonType.Place);
-                            taxi.onDuty = true;
-                            taxi.isAvailable = false;
+                            taxi.status = Constants.TaxiStatus.Available.getValue();
                             reportTaxiStatus(taxi);
                             Toast.makeText(context, getResources().getString(R.string.order_cancelled_toast), Toast.LENGTH_LONG).show();
-                            return;
                         }
 
                         showProgress(false);
@@ -379,7 +401,7 @@ public class OrderMap extends ActionBarActivity {
                 if (taxiDriverLocation != null) {
 
                     OrderDetailsDM driverOrder = new OrderDetailsDM();
-                    driverOrder = prepareOrderDetails(driverOrder);
+                    driverOrder = prepareDriverOrderDetails(driverOrder);
                     driverOrder.orderedAt = Calendar.getInstance().getTime();
                     driverOrder.pickupTime = 0;
                     RestClientManager.addOrder(driverOrder, context, new Callback<OrderDetailsDM>() {
@@ -391,8 +413,7 @@ public class OrderMap extends ActionBarActivity {
                                 UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
                                 assignedOrderId = orderDetailsDM.orderId;
                                 hasAssignedOrder = true;
-                                taxi.onDuty = true;
-                                taxi.isAvailable = false;
+                                taxi.status = Constants.TaxiStatus.Busy.getValue();
                                 toggleButton(ButtonType.Finish);
                             }
                             showProgress(false);
@@ -428,8 +449,7 @@ public class OrderMap extends ActionBarActivity {
                         if (status == HttpStatus.SC_OK) {
                             clearStoredOrder();
                             toggleButton(ButtonType.Place);
-                            taxi.onDuty = true;
-                            taxi.isAvailable = true;
+                            taxi.status = Constants.TaxiStatus.Available.getValue();
                             reportTaxiStatus(taxi);
                         }
                         showProgress(false);
@@ -453,9 +473,9 @@ public class OrderMap extends ActionBarActivity {
             return;
         }
 
-        RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Object>() {
+        RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Integer>() {
             @Override
-            public void success(Object o, Response response) {
+            public void success(Integer o, Response response) {
 
             }
 
@@ -572,26 +592,17 @@ public class OrderMap extends ActionBarActivity {
 
 
 
-    private boolean orderNotActive(OrderDetailsDM assignedOrderDM) {
-        if(assignedOrderDM.isWaiting){ // not picked up
-            if(assignedOrderDM.isFinished){ // cancelled
-                // cancelled already
-                clearStoredOrder();
-                toggleButton(ButtonType.Place); // "Place custom order"
-                return true;
-            } else{ // waiting for pick up
-                toggleButton(ButtonType.Cancel); // "Cancel order"
-            }
-
-        }else {
-            if(assignedOrderDM.isFinished){ // finished order
-                // finished already
-                clearStoredOrder();
-                toggleButton(ButtonType.Place); // "Place custom order"
-                return true;
-            } else{ // picked up, in progress
-                toggleButton(ButtonType.Finish); // "Finish order"
-            }
+    private boolean orderNotActive(OrderDetailsDM orderDM) {
+        if(orderDM.status == Constants.OrderStatus.Cancelled.getValue() || orderDM.status == Constants.OrderStatus.Finished.getValue()){
+            clearStoredOrder();
+            toggleButton(ButtonType.Place); // "Place custom order"
+            return true;
+        }
+        if(orderDM.status == Constants.OrderStatus.Waiting.getValue()){
+            toggleButton(ButtonType.Cancel); // "Cancel order"
+        }
+        if(orderDM.status == Constants.OrderStatus.InProgress.getValue()){
+            toggleButton(ButtonType.Finish); // "Finish order"
         }
         return false;
     }
@@ -611,15 +622,14 @@ public class OrderMap extends ActionBarActivity {
         clientOrderDM = null;
     }
 
-    private OrderDetailsDM prepareOrderDetails(OrderDetailsDM sourceOrderDM) {
+    private OrderDetailsDM prepareDriverOrderDetails(OrderDetailsDM sourceOrderDM) {
         sourceOrderDM.orderId = -1; // Will be updated later by the server
         if(taxiDriverLocation != null) {
             sourceOrderDM.orderLatitude = taxiDriverLocation.getLatitude();
             sourceOrderDM.orderLongitude = taxiDriverLocation.getLongitude();
         }
         // In progress
-        sourceOrderDM.isWaiting = false;
-        sourceOrderDM.isFinished = false;
+        sourceOrderDM.status = Constants.OrderStatus.InProgress.getValue();
 
         sourceOrderDM.taxiId = taxi.taxiId;
         sourceOrderDM.taxiPlate = taxi.plate;
@@ -634,8 +644,7 @@ public class OrderMap extends ActionBarActivity {
             sourceOrderDM.destinationLongitude = taxiDriverLocation.getLongitude();
       //  }
         // Set to Finished
-        sourceOrderDM.isWaiting = false;
-        sourceOrderDM.isFinished = true;
+        sourceOrderDM.status = Constants.OrderStatus.Finished.getValue();
         TaxiDetailsDM taxi = UserPreferencesManager.getAssignedTaxi(context);
         sourceOrderDM.taxiId = taxi.taxiId;
         sourceOrderDM.taxiPlate = taxi.plate;

@@ -13,9 +13,9 @@ public final class Constants {
 
     // COMMUNICATIONS
     //public static final String DEFAULT_URL = "http://get-a-taxi.apphb.com";
-    public static final String DEFAULT_URL = "http://192.168.50.112:14938";
+    //public static final String DEFAULT_URL = "http://192.168.50.112:14938";
     //public static final String DEFAULT_URL = "http://192.168.43.245:14938";
-    //public static final String DEFAULT_URL = "http://172.16.250.145:14938";
+    public static final String DEFAULT_URL = "http://172.16.250.145:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
 
@@ -89,6 +89,7 @@ public final class Constants {
     public static final String LOCATION = PACKAGE_NAME + ".LOCATION";
     public static final String LOCATION_ACCURACY = PACKAGE_NAME + ".LOCATION_ACCURACY";
     public static final float LOCATION_ACCURACY_THRESHOLD = 20; // meters
+    public static final float LOCATION_PICKUP_DISTANCE_THRESHOLD = 100; // meters
 
     // Report location on change threshold
     public static final float LOCATION_REST_REPORT_THRESHOLD = 200;
@@ -122,4 +123,28 @@ public final class Constants {
 
     // DEBUGGING STRINGS
 
+
+    public enum TaxiStatus {
+        Available(0), Busy(1), OffDuty(2), Unassigned(3), Decommissioned(4);
+        private final int value;
+        private TaxiStatus(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
+    public enum OrderStatus {
+        Unassigned(0), Waiting(1), InProgress(2), Finished(3), Cancelled(4);
+        private final int value;
+        private OrderStatus(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
 }

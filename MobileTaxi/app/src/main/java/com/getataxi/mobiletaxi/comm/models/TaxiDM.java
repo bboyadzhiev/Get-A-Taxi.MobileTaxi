@@ -18,9 +18,6 @@ public class TaxiDM {
     @SerializedName("lon")
     public double longitude;
 
-    @SerializedName("onDuty")
-    public boolean onDuty;
-
-    @SerializedName("isAvailable")
-    public boolean isAvailable;
+    @SerializedName("status")
+    public int status;
 }

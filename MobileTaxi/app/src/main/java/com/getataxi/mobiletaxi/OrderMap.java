@@ -170,6 +170,8 @@ public class OrderMap extends ActionBarActivity {
 
                 checkPickupAvailability();
 
+            } else if(action.equals(Constants.HUB_CANCELLED_ORDER_BC)){
+                // TODO
             }
         }
     };

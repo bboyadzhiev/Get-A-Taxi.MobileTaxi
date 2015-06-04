@@ -43,7 +43,7 @@ public class SignalRTrackingService extends Service {
         // Register for Location Service broadcasts
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.LOCATION_UPDATED);
-        registerReceiver(locationReceiver, filter);
+        registerReceiver(broadcastsReceiver, filter);
 
     }
 
@@ -118,8 +118,9 @@ public class SignalRTrackingService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        proxy.invoke("close");
         connection.stop();
-        unregisterReceiver(locationReceiver);
+        unregisterReceiver(broadcastsReceiver);
     }
 
     @Override
@@ -130,7 +131,7 @@ public class SignalRTrackingService extends Service {
     /**
      * The receiver for the Location Service location update broadcasts
      */
-    private final BroadcastReceiver locationReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver broadcastsReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -150,6 +151,16 @@ public class SignalRTrackingService extends Service {
                 if ( proxy != null && orderId != -1){
                     Log.d("TRACKINGSERVICE", "HUB_MY_LOCATION_CHANGED");
                     proxy.invoke(Constants.HUB_MY_LOCATION_CHANGED, orderId, lat, lon);
+                }
+
+            }
+
+            if(action.equals(Constants.ASSIGNED_ORDER_BC)){
+
+                int taxiId = intent.getIntExtra(Constants.ASSIGNED_TAXI_ID, -1);
+                if(proxy != null && orderId != -1 && taxiId != -1 ){
+                    String plate = intent.getStringExtra(Constants.ASSIGNED_TAXI_PLATE);
+                    proxy.invoke(Constants.HUB_TAXI_ASSIGNED_TO_ORDER, orderId, taxiId, plate);
                 }
 
             }

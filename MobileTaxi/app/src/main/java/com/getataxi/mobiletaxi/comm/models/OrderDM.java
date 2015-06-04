@@ -36,6 +36,9 @@ public class OrderDM {
     @SerializedName("custComment")
     public String userComment;
 
+    @SerializedName("status")
+    public int status;
+
     @SerializedName("pickupTime")
     public int pickupTime;
 }

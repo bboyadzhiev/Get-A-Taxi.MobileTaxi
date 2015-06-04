@@ -31,6 +31,7 @@ public final class Constants {
     public static final String TRACKING_HUB_PROXY = "trackingHub";
     public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
     public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+    public static final String HUB_TAXI_ASSIGNED_TO_ORDER = "taxiAssignedToOrder";
     public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
     // Hub broadcasts
     public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
@@ -117,6 +118,9 @@ public final class Constants {
 
     public static final String ASSIGNED_TAXI =  PACKAGE_NAME + ".ASSIGNED_TAXI";
     public static final String ASSIGNED_TAXI_ID =  PACKAGE_NAME + ".ASSIGNED_TAXI_ID";
+    public static final String ASSIGNED_TAXI_PLATE = PACKAGE_NAME + ".TAXI_PLATE";
+
+    public static final String ASSIGNED_ORDER_BC =  PACKAGE_NAME + ".ASSIGNED_TAXI";
 
 
     // UI - no UI strings should be here!

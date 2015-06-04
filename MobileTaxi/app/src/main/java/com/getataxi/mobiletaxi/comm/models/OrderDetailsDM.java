@@ -22,18 +22,20 @@ public class OrderDetailsDM extends OrderDM {
     public String customerPhoneNumber;
     @SerializedName("orderedAt")
     public Date orderedAt;
-    @SerializedName("status")
-    public int status;
 
-    @SerializedName("arrivalTime")
-    public int arrivalTime;
-    @SerializedName("bill")
-    public double bill;
-
+    // Properties, updated by taxi assignment
     @SerializedName("taxiId")
     public int taxiId;
     @SerializedName("taxiPlate")
     public String taxiPlate;
     @SerializedName("driverPhone")
     public String driverPhone;
+    @SerializedName("driverName")
+    public String driverName;
+
+    // Properties, updated in progress
+    @SerializedName("arrivalTime")
+    public int arrivalTime;
+    @SerializedName("bill")
+    public double bill;
 }

@@ -3,16 +3,13 @@ package com.getataxi.mobiletaxi;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.AlarmManager;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Build;
-import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,7 +31,6 @@ import com.getataxi.mobiletaxi.fragments.OrderDetailsFragment;
 import com.getataxi.mobiletaxi.utils.ClientOrdersListAdapter;
 import com.getataxi.mobiletaxi.utils.Constants;
 import com.getataxi.mobiletaxi.utils.LocationService;
-import com.getataxi.mobiletaxi.utils.OrdersNotificationReceiver;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -79,8 +75,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     Context context = this;
     Gson gson;
     DistanceComparator distanceComparator;
-    private AlarmManager mgr=null;
-    private PendingIntent pi=null;
 
 
     @Override
@@ -129,12 +123,12 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             }
         });
 
-        try {
-            Thread.sleep(2000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
+        // Start location service
+        Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
+        context.startService(locationService);
+
+        initiateOrdersTracking();
     }
 
     private void orderNotificationReceiver() {
@@ -153,10 +147,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 //                SystemClock.elapsedRealtime()+1000,
 //                5000,
 //                pi);
-    }
-
-    public void cancelAlarm(View v) {
-        mgr.cancel(pi);
     }
 
     @Override
@@ -178,9 +168,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
         distanceComparator = new DistanceComparator();
 
-        // Start location service
-        Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
-        context.startService(locationService);
 
         IntentFilter filter = new IntentFilter();
         // Register for Orders Service Hub broadcasts
@@ -201,7 +188,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             getDistrictOrders();
         }
 
-        initiateOrdersTracking();
+
 
     }
 

@@ -3,6 +3,7 @@ package com.getataxi.mobiletaxi;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -93,6 +94,12 @@ public class OrderMap extends ActionBarActivity {
         trackingIntent.putExtra(Constants.LOCATION_REPORT_ENABLED, trackingEnabled);
         trackingIntent.putExtra(Constants.ORDER_ID, orderId);
         startService(trackingIntent);
+    }
+
+    private void stopTrackingService() {
+        // Stop tracking service
+        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
+        stopService(trackingService);
     }
 
     /**
@@ -223,6 +230,10 @@ public class OrderMap extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
+        // Cancel all notifications
+        ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
+                .cancelAll();
+
         trackingEnabled = true;
         taxi = UserPreferencesManager.getAssignedTaxi(context);
 
@@ -269,8 +280,7 @@ public class OrderMap extends ActionBarActivity {
         super.onDestroy();
 
         // Stop tracking service
-        Intent trackingService = new Intent(OrderMap.this, SignalRTrackingService.class);
-        stopService(trackingService);
+        stopTrackingService();
 
         unregisterReceiver(locationReceiver);
     }
@@ -622,7 +632,11 @@ public class OrderMap extends ActionBarActivity {
         }
 
         clientOrderDM = null;
+        stopTrackingService();
+
     }
+
+
 
     private OrderDetailsDM prepareDriverOrderDetails(OrderDetailsDM sourceOrderDM) {
         sourceOrderDM.orderId = -1; // Will be updated later by the server

@@ -479,10 +479,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 if (status == HttpStatus.SC_OK) {
                     UserPreferencesManager.storeOrderId(orderDetailsDM.orderId, context);
 
-                    Intent assignment = new Intent(Constants.ASSIGNED_ORDER_BC);
-                    assignment.putExtra(Constants.ASSIGNED_TAXI_ID, assignedTaxi.taxiId);
-                    assignment.putExtra(Constants.ASSIGNED_TAXI_PLATE, assignedTaxi.plate);
-                    sendBroadcast(assignment);
 
                     Intent orderMap = new Intent(context, OrderMap.class);
                     //orderMap.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);

@@ -93,6 +93,8 @@ public class OrderMap extends ActionBarActivity {
         trackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
         trackingIntent.putExtra(Constants.LOCATION_REPORT_ENABLED, trackingEnabled);
         trackingIntent.putExtra(Constants.ORDER_ID, orderId);
+        trackingIntent.putExtra(Constants.ASSIGNED_TAXI_ID, taxi.taxiId);
+        trackingIntent.putExtra(Constants.ASSIGNED_TAXI_PLATE, taxi.plate);
         startService(trackingIntent);
     }
 

@@ -61,8 +61,9 @@ public class OrderMap extends ActionBarActivity {
 
     private View mProgressView;
 
-    private Location taxiDriverLocation;
-    private Location taxiUpdatedTaxiLocation;
+    private Location taxiLocation;
+    private Location taxiUpdatedLocation;
+
     private Location clientLocation;
     private Location clientUpdatedLocation;
 
@@ -118,32 +119,39 @@ public class OrderMap extends ActionBarActivity {
                 // Client location change
                 Bundle data = intent.getExtras();
                 Log.d("ORDER_MAP", "LOCATION_UPDATED");
-                taxiUpdatedTaxiLocation = data.getParcelable(Constants.LOCATION);
-                taxiDriverLocation = taxiUpdatedTaxiLocation;
+                taxiUpdatedLocation = data.getParcelable(Constants.LOCATION);
+
+
                 float threshold = data.getFloat(Constants.LOCATION_ACCURACY, Constants.LOCATION_ACCURACY_THRESHOLD);
 
-                double clientLat = taxiDriverLocation.getLatitude();
-                double clientLon = taxiDriverLocation.getLongitude();
+                double clientLat = taxiUpdatedLocation.getLatitude();
+                double clientLon = taxiUpdatedLocation.getLongitude();
                 // Update taxi location too
                 taxi.latitude = clientLat;
                 taxi.longitude = clientLon;
 
+                if(taxiUpdatedLocation.distanceTo(taxiLocation) > Constants.LOCATION_REST_REPORT_THRESHOLD){
+                    reportTaxiStatus(taxi);
+                }
+
+                taxiLocation = taxiUpdatedLocation;
                 String markerTitle = "Taxi";
                 LatLng latLng =  new LatLng(clientLat, clientLon);
+
+                boolean animateTaxiMarker = false;
+                if(hasAssignedOrder && clientOrderDM.status == Constants.OrderStatus.InProgress.getValue()){
+                    animateTaxiMarker = true;
+                }
 
                 taxiLocationMarker = updateMarker(
                         taxiLocationMarker,
                         latLng,
-                        markerTitle, false
+                        markerTitle, animateTaxiMarker
                 );
 
                 if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
                     // Reverse geocode for an address
                     placeDriverOrderButton.setEnabled(isTaxiOnDuty());
-                }
-
-                if(taxiUpdatedTaxiLocation.distanceTo(taxiDriverLocation) > Constants.LOCATION_REST_REPORT_THRESHOLD){
-                    reportTaxiStatus(taxi);
                 }
 
                 checkPickupAvailability();
@@ -188,19 +196,13 @@ public class OrderMap extends ActionBarActivity {
     private void checkPickupAvailability() {
         if(hasAssignedOrder
                 && clientOrderDM.status == Constants.OrderStatus.Waiting.getValue()
-                && taxiUpdatedTaxiLocation != null
+                && taxiUpdatedLocation != null
                 ){
 
-            // TODO review!!!
-            if(clientUpdatedLocation == null && clientOrderDM != null){
-                // get from model details
-                clientLocation = new Location("void");
-                clientLocation.setLatitude(clientOrderDM.orderLatitude);
-                clientLocation.setLongitude(clientOrderDM.orderLongitude);
-            }
-
-            if(taxiUpdatedTaxiLocation.distanceTo(clientLocation) < Constants.LOCATION_PICKUP_DISTANCE_THRESHOLD){
+            if(taxiUpdatedLocation.distanceTo(clientLocation) < Constants.LOCATION_PICKUP_DISTANCE_THRESHOLD){
                 toggleButton(ButtonType.Pickup);
+            } else {
+                toggleButton(ButtonType.Cancel);
             }
         }
     }
@@ -253,7 +255,7 @@ public class OrderMap extends ActionBarActivity {
         trackingEnabled = true;
         taxi = UserPreferencesManager.getAssignedTaxi(context);
 
-        taxiDriverLocation = updateLocation(taxiDriverLocation, taxi.latitude, taxi.longitude);
+        taxiLocation = updateLocation(taxiLocation, taxi.latitude, taxi.longitude);
         taxiLocationMarker = updateMarker(
                 taxiLocationMarker,
                 new LatLng(taxi.latitude, taxi.longitude),
@@ -333,6 +335,10 @@ public class OrderMap extends ActionBarActivity {
                             broadcastOrderChanged();
                             toggleButton(ButtonType.Finish);
                             taxi.status = Constants.TaxiStatus.Busy.getValue();
+                            // Removing current client marker, it should be the taxi
+                            if (clientLocationMarker != null) {
+                                clientLocationMarker.remove();
+                            }
                             reportTaxiStatus(taxi);
                         }
 
@@ -428,7 +434,7 @@ public class OrderMap extends ActionBarActivity {
             public void onClick(View v) {
                 placeDriverOrderButton.setEnabled(false);
                 showProgress(true);
-                if (taxiUpdatedTaxiLocation != null) {
+                if (taxiUpdatedLocation != null) {
 
                     OrderDetailsDM driverOrder = new OrderDetailsDM();
                     driverOrder = prepareDriverOrderDetails(driverOrder);
@@ -538,7 +544,7 @@ public class OrderMap extends ActionBarActivity {
             pickupOrderButton.setVisibility(View.INVISIBLE);
             pickupOrderButton.setEnabled(false);
             placeDriverOrderButton.setVisibility(View.VISIBLE);
-            if(taxiDriverLocation != null) {
+            if(taxiUpdatedLocation != null) {
                 placeDriverOrderButton.setEnabled(true);
             }
             finishOrderButton.setVisibility(View.INVISIBLE);
@@ -549,7 +555,7 @@ public class OrderMap extends ActionBarActivity {
             pickupOrderButton.setVisibility(View.VISIBLE);
             pickupOrderButton.setEnabled(true);
             placeDriverOrderButton.setVisibility(View.INVISIBLE);
-            if(taxiDriverLocation != null) {
+            if(taxiUpdatedLocation != null) {
                 placeDriverOrderButton.setEnabled(true);
             }
             finishOrderButton.setVisibility(View.INVISIBLE);
@@ -657,10 +663,12 @@ public class OrderMap extends ActionBarActivity {
         clientLocation = null;
         if(clientLocationMarker != null){
             clientLocationMarker.remove();
+            clientLocationMarker = null;
         }
 
-        if(destinationLocationMarker !=null){
+        if(destinationLocationMarker != null){
             destinationLocationMarker.remove();
+            destinationLocationMarker = null;
         }
 
         clientOrderDM = null;
@@ -672,8 +680,8 @@ public class OrderMap extends ActionBarActivity {
 
     private OrderDetailsDM prepareDriverOrderDetails(OrderDetailsDM sourceOrderDM) {
         sourceOrderDM.orderId = -1; // Will be updated later by the server
-        sourceOrderDM.orderLatitude = taxiDriverLocation.getLatitude();
-        sourceOrderDM.orderLongitude = taxiDriverLocation.getLongitude();
+        sourceOrderDM.orderLatitude = taxiLocation.getLatitude();
+        sourceOrderDM.orderLongitude = taxiLocation.getLongitude();
 
         // In progress
         sourceOrderDM.status = Constants.OrderStatus.InProgress.getValue();
@@ -686,8 +694,8 @@ public class OrderMap extends ActionBarActivity {
 
     private OrderDetailsDM completeOrderDetails(OrderDetailsDM sourceOrderDM) {
         sourceOrderDM.orderId = assignedOrderId;
-        sourceOrderDM.destinationLatitude = taxiDriverLocation.getLatitude();
-        sourceOrderDM.destinationLongitude = taxiDriverLocation.getLongitude();
+        sourceOrderDM.destinationLatitude = taxiLocation.getLatitude();
+        sourceOrderDM.destinationLongitude = taxiLocation.getLongitude();
 
         // Set to Finished
         sourceOrderDM.status = Constants.OrderStatus.Finished.getValue();
@@ -717,9 +725,6 @@ public class OrderMap extends ActionBarActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-
-
         if(id == R.id.action_order_assignment && !hasAssignedOrder){
             Intent intent = new Intent(context, OrderAssignmentActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -797,19 +802,32 @@ public class OrderMap extends ActionBarActivity {
         mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
-                if(taxiDriverLocation != null){
-                    LatLng loc = new LatLng(taxiDriverLocation.getLatitude(), taxiDriverLocation.getLongitude());
-                    taxiLocationMarker = updateMarker(taxiLocationMarker, loc, taxiLocationMarker.getTitle(), false);
-                }
+//                if(taxiLocation != null){
+//                    LatLng loc = new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
+//                    taxiLocationMarker = updateMarker(taxiLocationMarker, loc, taxiLocationMarker.getTitle(), false);
+//                }
+//
+//                if(clientLocation != null){
+//                    LatLng loc = new LatLng(clientLocation.getLatitude(), clientLocation.getLongitude());
+//                    clientLocationMarker = updateMarker(clientLocationMarker, loc, clientLocationMarker.getTitle(), false);
+//                }
+//
+//                if(clientOrderDM != null && !clientOrderDM.destinationAddress.isEmpty()){
+//                    LatLng loc = new LatLng(clientOrderDM.destinationLatitude, clientOrderDM.destinationLongitude);
+//                    destinationLocationMarker =  updateMarker(destinationLocationMarker, loc, clientOrderDM.destinationAddress, false);
+//                }
 
-                if(clientLocation != null){
+                if(taxiLocationMarker != null){
+                    LatLng loc = new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
+                    animateMarker(taxiLocationMarker, loc, false);
+                }
+                if(clientLocationMarker != null){
                     LatLng loc = new LatLng(clientLocation.getLatitude(), clientLocation.getLongitude());
-                    clientLocationMarker = updateMarker(clientLocationMarker, loc, clientLocationMarker.getTitle(), false);
+                    animateMarker(clientLocationMarker, loc, false);
                 }
-
-                if(clientOrderDM != null && !clientOrderDM.destinationAddress.isEmpty()){
+                if(destinationLocationMarker != null){
                     LatLng loc = new LatLng(clientOrderDM.destinationLatitude, clientOrderDM.destinationLongitude);
-                    destinationLocationMarker =  updateMarker(destinationLocationMarker, loc, clientOrderDM.destinationAddress, false);
+                    animateMarker(destinationLocationMarker, loc, false);
                 }
             }
         });
@@ -873,7 +891,6 @@ public class OrderMap extends ActionBarActivity {
                             //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
                     .build();                   // Creates a CameraPosition from the builder
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-            animateMarker(marker, location, false);
         }
         marker.showInfoWindow();
         return marker;

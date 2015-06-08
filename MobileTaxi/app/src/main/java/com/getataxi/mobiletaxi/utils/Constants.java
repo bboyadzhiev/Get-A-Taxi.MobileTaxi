@@ -73,7 +73,7 @@ public final class Constants {
     public static final float LOCATION_PICKUP_DISTANCE_THRESHOLD = 100; // meters
 
     // Report location on change threshold
-    public static final float LOCATION_REST_REPORT_THRESHOLD = 200;
+    public static final float LOCATION_REST_REPORT_THRESHOLD = 500;
 
     // Times
     public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds

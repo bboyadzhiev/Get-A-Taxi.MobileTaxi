@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import microsoft.aspnet.signalr.client.Action;
 import microsoft.aspnet.signalr.client.LogLevel;
 import microsoft.aspnet.signalr.client.Logger;
 import microsoft.aspnet.signalr.client.SignalRFuture;
@@ -170,6 +171,7 @@ public class SignalROrdersService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        proxy.invoke("close");
         connection.stop();
     }
 

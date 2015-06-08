@@ -46,6 +46,7 @@ public class SignalRTrackingService extends Service {
         // Register for Location Service broadcasts
         IntentFilter filter = new IntentFilter();
         filter.addAction(Constants.LOCATION_UPDATED);
+        filter.addAction(Constants.ORDER_STATUS_CHANGED_BC);
         registerReceiver(broadcastsReceiver, filter);
 
     }
@@ -165,6 +166,7 @@ public class SignalRTrackingService extends Service {
             }
 
             if(action.equals(Constants.ORDER_STATUS_CHANGED_BC)){
+                Log.d(TAG, Constants.HUB_ORDER_STATUS_CHANGED);
                 proxy.invoke(Constants.HUB_ORDER_STATUS_CHANGED, orderId);
             }
 

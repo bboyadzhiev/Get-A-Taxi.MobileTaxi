@@ -40,6 +40,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import org.apache.http.HttpStatus;
 
@@ -57,7 +59,6 @@ public class OrderMap extends ActionBarActivity {
 
     private Context context;
     private  String phoneNumber;
-
 
     private View mProgressView;
 
@@ -140,6 +141,11 @@ public class OrderMap extends ActionBarActivity {
 
                 boolean animateTaxiMarker = false;
                 if(hasAssignedOrder && clientOrderDM.status == Constants.OrderStatus.InProgress.getValue()){
+                    animateTaxiMarker = true;
+                }
+                else if(taxi.status == Constants.TaxiStatus.Available.getValue()
+                        || taxi.status == Constants.TaxiStatus.OffDuty.getValue()
+                        ){
                     animateTaxiMarker = true;
                 }
 
@@ -451,6 +457,7 @@ public class OrderMap extends ActionBarActivity {
                                 hasAssignedOrder = true;
                                 taxi.status = Constants.TaxiStatus.Busy.getValue();
                                 toggleButton(ButtonType.Finish);
+                                invalidateOptionsMenu();
                             }
                             showProgress(false);
                         }
@@ -505,6 +512,7 @@ public class OrderMap extends ActionBarActivity {
         });
     }
 
+
     private void broadcastOrderChanged() {
         Intent broadcastOrderChanged = new Intent(Constants.ORDER_STATUS_CHANGED_BC);
         sendBroadcast(broadcastOrderChanged);
@@ -517,8 +525,8 @@ public class OrderMap extends ActionBarActivity {
 
         RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Integer>() {
             @Override
-            public void success(Integer o, Response response) {
-
+            public void success(Integer stat, Response response) {
+                taxi.status = stat;
             }
 
             @Override
@@ -601,7 +609,9 @@ public class OrderMap extends ActionBarActivity {
                             clientLocation.setLatitude(clientOrderDM.orderLatitude);
                             clientLocation.setLongitude(clientOrderDM.orderLongitude);
                         }
-
+                        UserPreferencesManager.storeOrderId(assignedOrderDM.orderId, context);
+                        hasAssignedOrder = true;
+                        invalidateOptionsMenu();
                         String title = assignedOrderDM.orderAddress + "</br><small>" + assignedOrderDM.firstName + " " + assignedOrderDM.lastName + "</small>";
 
                         clientLocationMarker = updateMarker(
@@ -619,6 +629,7 @@ public class OrderMap extends ActionBarActivity {
 
                             destinationLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.destination));
                         }
+
 
                         initiateTracking(assignedOrderDM.orderId);
 
@@ -674,6 +685,8 @@ public class OrderMap extends ActionBarActivity {
         clientOrderDM = null;
         stopTrackingService();
 
+        // Enable menus
+        invalidateOptionsMenu();
     }
 
 
@@ -715,7 +728,6 @@ public class OrderMap extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.menu_order_map, menu);
         menu.findItem(R.id.action_order_assignment).setEnabled(!hasAssignedOrder);
         menu.findItem(R.id.action_release_taxi).setEnabled(!hasAssignedOrder);
-
         return true;
     }
 
@@ -898,10 +910,14 @@ public class OrderMap extends ActionBarActivity {
 
 
     private void showToastError(RetrofitError error) {
-        if (error.getResponse().getBody() != null) {
+        Response response = error.getResponse();
+        if (response != null && response.getBody() != null) {
             String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
             if(!json.isEmpty()){
-                Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+                JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
+                String message = jobj.get("Message").getAsString();
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                //Toast.makeText(context, json, Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }

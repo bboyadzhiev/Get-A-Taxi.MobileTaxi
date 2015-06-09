@@ -34,6 +34,7 @@ import com.getataxi.mobiletaxi.utils.LocationService;
 import com.getataxi.mobiletaxi.utils.UserPreferencesManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.http.HttpStatus;
@@ -70,6 +71,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
     private View mProgressView;
     private TextView mNoOrdersTxt;
+    private TextView mOffDutyTxt;
 
     ClientOrdersListAdapter ordersListAdapter;
     Context context = this;
@@ -97,7 +99,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
         mProgressView = findViewById(R.id.get_orders_progress);
         mNoOrdersTxt = (TextView)findViewById(R.id.noOrdersLabel);
-
+        mOffDutyTxt = (TextView)findViewById(R.id.offDutyLabel);
 
         this.assignButton = (Button)this.findViewById(R.id.assignOrderButton);
         assignButton.setEnabled(false);
@@ -128,7 +130,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
         context.startService(locationService);
 
-        initiateOrdersTracking();
+
     }
 
     private void orderNotificationReceiver() {
@@ -161,6 +163,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         gson = new GsonBuilder()
                 .setDateFormat(Constants.GSON_DATE_FORMAT)
                 .create();
+
+        if(assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) {
+            initiateOrdersTracking();
+        }
 
         // Cancel all notifications
         ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
@@ -227,12 +233,18 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         ordersTrackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
         ordersTrackingIntent.putExtra(Constants.DISTRICT_ID, UserPreferencesManager.getDistrictId(context));
         startService(ordersTrackingIntent);
+        getDistrictOrders();
     }
 
     private void disableOrdersTracking(){
         // Stop orders tracking service
         Intent stopOrdersService = new Intent(OrderAssignmentActivity.this, SignalROrdersService.class);
         stopService(stopOrdersService);
+
+        if(orders!=null){
+            orders.clear();
+            updateOrdersListView();
+        }
     }
 
     // BROADCAST RECEIVER
@@ -377,21 +389,26 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     }
 
     private void updateOrdersListView() {
-        if(ordersListAdapter != null){
-            Collections.sort(orders, distanceComparator);
-            ordersListAdapter.notifyDataSetChanged();
+        if(assignedTaxi.status == Constants.TaxiStatus.OffDuty.getValue()){
+            mNoOrdersTxt.setVisibility(View.INVISIBLE);
+            mOffDutyTxt.setVisibility(View.VISIBLE);
         } else {
-            if(!orders.isEmpty()) {
-                mNoOrdersTxt.setVisibility(View.INVISIBLE);
-                Collections.sort(orders, distanceComparator);
-                ordersListAdapter = new ClientOrdersListAdapter(context,
-                        R.layout.fragment_order_list_item, orders);
-                ordersListView.setVisibility(View.VISIBLE);
-                ordersListView.setAdapter(ordersListAdapter);
-                ordersListView.setOnItemClickListener(this);
+            mOffDutyTxt.setVisibility(View.INVISIBLE);
+            if(ordersListAdapter != null){
+                    Collections.sort(orders, distanceComparator);
+                    ordersListAdapter.notifyDataSetChanged();
             } else {
-                mNoOrdersTxt.setVisibility(View.VISIBLE);
-                ordersListView.setVisibility(View.INVISIBLE);
+                if(!orders.isEmpty()) {
+                    mNoOrdersTxt.setVisibility(View.INVISIBLE);
+                    Collections.sort(orders, distanceComparator);
+                    ordersListAdapter = new ClientOrdersListAdapter(context,
+                            R.layout.fragment_order_list_item, orders);
+                    ordersListView.setVisibility(View.VISIBLE);
+                    ordersListView.setAdapter(ordersListAdapter);
+                    ordersListView.setOnItemClickListener(this);
+                } else {
+                    mNoOrdersTxt.setVisibility(View.VISIBLE);
+                }
             }
         }
     }
@@ -552,10 +569,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
             showProgress(true);
 
-//            item.setChecked(!item.isChecked());
-
-
-            // TODO FINISH !!!!!!!!
             // send the new status
             RestClientManager.updateTaxi(assignedTaxi, context, new Callback<Integer>() {
                 @Override
@@ -565,13 +578,13 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                         //if all went fine update
                         if(newStatus == Constants.TaxiStatus.Available.getValue()) {
                             Toast.makeText(context, R.string.now_on_duty_available, Toast.LENGTH_LONG).show();
-                            taxiStatusChnaged(newStatus);
+                            taxiStatusChanged(newStatus);
                         } else if(newStatus == Constants.TaxiStatus.Busy.getValue()){
                             Toast.makeText(context, R.string.now_on_duty_busy, Toast.LENGTH_LONG).show();
-                            taxiStatusChnaged(newStatus);
+                            taxiStatusChanged(newStatus);
                         } else if (newStatus == Constants.TaxiStatus.OffDuty.getValue()){
                             Toast.makeText(context, R.string.now_off_duty, Toast.LENGTH_LONG).show();
-                            taxiStatusChnaged(newStatus);
+                            taxiStatusChanged(newStatus);
                         } else {
                             Toast.makeText(context, R.string.taxi_bad_state, Toast.LENGTH_LONG).show();
                         }
@@ -648,7 +661,8 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-    private void taxiStatusChnaged(int status) {
+    private void taxiStatusChanged(int status) {
+        assignedTaxi.status = status;
         UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
         if(status == Constants.TaxiStatus.Available.getValue() || status == Constants.TaxiStatus.Busy.getValue()){
             initiateOrdersTracking();
@@ -676,20 +690,20 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     }
 
     private void showToastError(RetrofitError error) {
-        if(error.getResponse() != null) {
-            if (error.getResponse().getBody() != null) {
+        Response response = error.getResponse();
+        if (response != null && response.getBody() != null) {
                 String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
                 if(!json.isEmpty()){
-                    Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+                    JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
+                    String message = jobj.get("Message").getAsString();
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                   // Toast.makeText(context, json, Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }else {
                 Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
             }
-        } else {
-            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-        }
     }
 
     private OrderDM fromOrderDetailsDM(OrderDetailsDM orderDetails){

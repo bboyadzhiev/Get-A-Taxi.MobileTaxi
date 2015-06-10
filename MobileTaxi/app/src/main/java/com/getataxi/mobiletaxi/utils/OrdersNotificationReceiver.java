@@ -46,8 +46,9 @@ public class OrdersNotificationReceiver extends BroadcastReceiver {
                     new Intent(context, OrderAssignmentActivity.class),
                     0);
 
+            String destinationAddress = order.destinationAddress != null ? order.destinationAddress : "";
             note.setLatestEventInfo(context, order.orderAddress,
-                    order.destinationAddress,
+                    destinationAddress,
                     i);
 
             mgr.notify(NOTIFY_ME_ID, note);

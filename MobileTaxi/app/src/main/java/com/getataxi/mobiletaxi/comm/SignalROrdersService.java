@@ -53,7 +53,7 @@ public class SignalROrdersService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        Toast.makeText(this, getString(R.string.district_orders_monitoring_service), Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.district_orders_monitoring_service_started), Toast.LENGTH_LONG).show();
         Logger l  = new Logger() {
             @Override
             public void log(String s, LogLevel logLevel) {
@@ -173,6 +173,7 @@ public class SignalROrdersService extends Service {
         super.onDestroy();
         proxy.invoke("close");
         connection.stop();
+        Toast.makeText(this, getString(R.string.district_orders_monitoring_service_stopped), Toast.LENGTH_LONG).show();
     }
 
     public static Thread performOnBackgroundThread(final Runnable runnable) {

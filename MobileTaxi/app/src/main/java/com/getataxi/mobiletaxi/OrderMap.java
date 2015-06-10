@@ -275,7 +275,7 @@ public class OrderMap extends ActionBarActivity {
             toggleButton(ButtonType.Cancel);
         } else {
             toggleButton(ButtonType.Place);
-            placeDriverOrderButton.setEnabled(isTaxiOnDuty());
+            if(taxiUpdatedLocation!=null) placeDriverOrderButton.setEnabled(isTaxiOnDuty());
         }
 
         IntentFilter filter = new IntentFilter();
@@ -313,12 +313,9 @@ public class OrderMap extends ActionBarActivity {
 
     // INPUTS
     private void initInputs() {
-        cancelOrderButton = (Button)findViewById(R.id.btn_cancel_order);
-        cancelOrderButton.setEnabled(false);
 
         pickupOrderButton = (Button)findViewById(R.id.btn_pickup_order);
         pickupOrderButton.setEnabled(false);
-
         pickupOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -376,11 +373,9 @@ public class OrderMap extends ActionBarActivity {
             }
         });
 
-        placeDriverOrderButton = (Button)findViewById(R.id.btn_place_order);
-        placeDriverOrderButton.setEnabled(false);
 
-        finishOrderButton = (Button)findViewById(R.id.btn_finish_order);
-        finishOrderButton.setEnabled(false);
+        cancelOrderButton = (Button)findViewById(R.id.btn_cancel_order);
+        cancelOrderButton.setEnabled(false);
         // Cancel order if possible
         cancelOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -399,6 +394,7 @@ public class OrderMap extends ActionBarActivity {
 
                         if (status == HttpStatus.SC_OK) {
                             // Cancelled successfully
+                            broadcastOrderChanged();
                             clearStoredOrder();
                             toggleButton(ButtonType.Place);
                             taxi.status = Constants.TaxiStatus.Available.getValue();
@@ -435,6 +431,8 @@ public class OrderMap extends ActionBarActivity {
             }
         });
 
+        placeDriverOrderButton = (Button)findViewById(R.id.btn_place_order);
+        placeDriverOrderButton.setEnabled(false);
         placeDriverOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -475,6 +473,8 @@ public class OrderMap extends ActionBarActivity {
             }
         });
 
+        finishOrderButton = (Button)findViewById(R.id.btn_finish_order);
+        finishOrderButton.setEnabled(false);
         finishOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

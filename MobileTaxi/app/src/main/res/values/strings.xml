@@ -22,7 +22,8 @@
     <string name="action_release_taxi_txt">Release taxi!</string>
     <string name="change_server">Change server</string>
     <string name="tracking_started">Tracking started</string>
-    <string name="district_orders_monitoring_service">District orders monitoring started...</string>
+    <string name="district_orders_monitoring_service_started">District orders monitoring started...</string>
+    <string name="district_orders_monitoring_service_stopped">District orders monitoring STOPPED...</string>
     <string name="pickup_order_txt">Pick up!</string>
     <string name="new_order_notification_title">New order available!</string>
     <string name="taxi_details_txt">Selected taxi details</string>

@@ -164,10 +164,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
                 .setDateFormat(Constants.GSON_DATE_FORMAT)
                 .create();
 
-        if(assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) {
-            initiateOrdersTracking();
-        }
-
         // Cancel all notifications
         ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
                 .cancelAll();
@@ -187,15 +183,16 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         // And broadcasts receiver
         registerReceiver(broadcastsReceiver, filter);
 
+        if(assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) {
+            initiateOrdersTracking();
+        }
+
         if(UserPreferencesManager.hasAssignedOrder(context)){
             // If still active order, goes directly to order map
             checkForActiveOrder();
-        } else {
-            getDistrictOrders();
         }
 
-
-
+        updateOrdersListView();
     }
 
     @Override
@@ -389,28 +386,54 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     }
 
     private void updateOrdersListView() {
+//        if(assignedTaxi.status == Constants.TaxiStatus.OffDuty.getValue()){
+//            mNoOrdersTxt.setVisibility(View.INVISIBLE);
+//            mOffDutyTxt.setVisibility(View.VISIBLE);
+//        } else {
+//            mOffDutyTxt.setVisibility(View.INVISIBLE);
+//            if(ordersListAdapter != null){
+//                    Collections.sort(orders, distanceComparator);
+//                    ordersListAdapter.notifyDataSetChanged();
+//            } else {
+//                if(!orders.isEmpty()) {
+//                    mNoOrdersTxt.setVisibility(View.INVISIBLE);
+//                    Collections.sort(orders, distanceComparator);
+//                    ordersListAdapter = new ClientOrdersListAdapter(context,
+//                            R.layout.fragment_order_list_item, orders);
+//                    ordersListView.setVisibility(View.VISIBLE);
+//                    ordersListView.setAdapter(ordersListAdapter);
+//                    ordersListView.setOnItemClickListener(this);
+//                } else {
+//                    mNoOrdersTxt.setVisibility(View.VISIBLE);
+//                }
+//            }
+//        }
+
+        if(ordersListAdapter != null){
+            Collections.sort(orders, distanceComparator);
+            ordersListAdapter.notifyDataSetChanged();
+        } else {
+            if(!orders.isEmpty()) {
+                mNoOrdersTxt.setVisibility(View.INVISIBLE);
+                Collections.sort(orders, distanceComparator);
+                ordersListAdapter = new ClientOrdersListAdapter(context,
+                        R.layout.fragment_order_list_item, orders);
+                ordersListView.setVisibility(View.VISIBLE);
+                ordersListView.setAdapter(ordersListAdapter);
+                ordersListView.setOnItemClickListener(this);
+            } else {
+                mNoOrdersTxt.setVisibility(View.VISIBLE);
+            }
+        }
+
         if(assignedTaxi.status == Constants.TaxiStatus.OffDuty.getValue()){
             mNoOrdersTxt.setVisibility(View.INVISIBLE);
             mOffDutyTxt.setVisibility(View.VISIBLE);
         } else {
             mOffDutyTxt.setVisibility(View.INVISIBLE);
-            if(ordersListAdapter != null){
-                    Collections.sort(orders, distanceComparator);
-                    ordersListAdapter.notifyDataSetChanged();
-            } else {
-                if(!orders.isEmpty()) {
-                    mNoOrdersTxt.setVisibility(View.INVISIBLE);
-                    Collections.sort(orders, distanceComparator);
-                    ordersListAdapter = new ClientOrdersListAdapter(context,
-                            R.layout.fragment_order_list_item, orders);
-                    ordersListView.setVisibility(View.VISIBLE);
-                    ordersListView.setAdapter(ordersListAdapter);
-                    ordersListView.setOnItemClickListener(this);
-                } else {
-                    mNoOrdersTxt.setVisibility(View.VISIBLE);
-                }
-            }
         }
+
+
     }
 
     public void disableAssignButton(){
@@ -422,7 +445,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         public int compare(OrderDM o1, OrderDM o2) {
             double val1 = (Math.abs(o1.orderLatitude - assignedTaxi.latitude) + Math.abs(o1.orderLongitude - assignedTaxi.longitude));
             double val2 = (Math.abs(o2.orderLatitude - assignedTaxi.latitude) + Math.abs(o2.orderLongitude - assignedTaxi.longitude));
-            boolean result = val1 < val2;
+            boolean result = val1 > val2;
             return result ? 1 : -1;
         }
     }

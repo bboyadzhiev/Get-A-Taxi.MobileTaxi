@@ -79,6 +79,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     DistanceComparator distanceComparator;
 
 
+    // ACTIVITY LIFECYCLE
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -135,24 +136,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             getDistrictOrders();
         }
 
-    }
-
-    private void orderNotificationReceiver() {
-//        ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
-//                .cancelAll();
-//
-//        mgr=(AlarmManager)getSystemService(Context.ALARM_SERVICE);
-//
-//        Intent i=new Intent(this, SignalROrdersService.class);
-//
-//        pi=PendingIntent.getService(this, 0, i, 0);
-//
-//        cancelAlarm(null);
-//
-//        mgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-//                SystemClock.elapsedRealtime()+1000,
-//                5000,
-//                pi);
     }
 
     @Override
@@ -241,7 +224,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
 
     // BROADCAST RECEIVER
     private final BroadcastReceiver broadcastsReceiver = new BroadcastReceiver() {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -356,6 +338,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         }
     };
 
+    //LOGIC
     private void updateTaxiDetails() {
         if(!((assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) || (assignedTaxi.status == Constants.TaxiStatus.Busy.getValue()))){
             return;
@@ -378,49 +361,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         selectedOrderId = -1;
         assignButton.setEnabled(false);
         getFragmentManager().beginTransaction().hide(orderDetailsFragment).commit();
-    }
-
-    private void updateOrdersListView() {
-
-        if(ordersListAdapter != null){
-            Collections.sort(orders, distanceComparator);
-            ordersListAdapter.notifyDataSetChanged();
-        } else {
-            if(!orders.isEmpty()) {
-                mNoOrdersTxt.setVisibility(View.INVISIBLE);
-                Collections.sort(orders, distanceComparator);
-                ordersListAdapter = new ClientOrdersListAdapter(context,
-                        R.layout.fragment_order_list_item, orders);
-                ordersListView.setVisibility(View.VISIBLE);
-                ordersListView.setAdapter(ordersListAdapter);
-                ordersListView.setOnItemClickListener(this);
-            } else {
-                mNoOrdersTxt.setVisibility(View.VISIBLE);
-            }
-        }
-
-        if(assignedTaxi.status == Constants.TaxiStatus.OffDuty.getValue()){
-            mNoOrdersTxt.setVisibility(View.INVISIBLE);
-            mOffDutyTxt.setVisibility(View.VISIBLE);
-        } else {
-            mOffDutyTxt.setVisibility(View.INVISIBLE);
-        }
-
-
-    }
-
-    public void disableAssignButton(){
-        assignButton.setEnabled(false);
-    }
-
-    public class DistanceComparator implements Comparator<OrderDM> {
-        @Override
-        public int compare(OrderDM o1, OrderDM o2) {
-            double val1 = (Math.abs(o1.orderLatitude - assignedTaxi.latitude) + Math.abs(o1.orderLongitude - assignedTaxi.longitude));
-            double val2 = (Math.abs(o2.orderLatitude - assignedTaxi.latitude) + Math.abs(o2.orderLongitude - assignedTaxi.longitude));
-            boolean result = val1 > val2;
-            return result ? 1 : -1;
-        }
     }
 
     private void getDistrictOrders() {
@@ -481,6 +421,32 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         });
     }
 
+    private void updateOrderDM(OrderDM order, OrderDM newOrderDM){
+        order.orderId = newOrderDM.orderId;
+        order.orderAddress = newOrderDM.orderAddress;
+        order.orderLatitude = newOrderDM.orderLatitude;
+        order.orderLongitude = newOrderDM.orderLongitude;
+        order.destinationAddress = newOrderDM.destinationAddress;
+        order.destinationLatitude = newOrderDM.destinationLatitude;
+        order.destinationLongitude = newOrderDM.destinationLongitude;
+        order.userComment = newOrderDM.userComment;
+        order.pickupTime = newOrderDM.pickupTime;
+    }
+
+    private OrderDM fromOrderDetailsDM(OrderDetailsDM orderDetails){
+        OrderDM order = new OrderDM();
+        order.orderId = orderDetails.orderId;
+        order.orderAddress = orderDetails.orderAddress;
+        order.orderLatitude = orderDetails.orderLatitude;
+        order.orderLongitude = orderDetails.orderLongitude;
+        order.destinationAddress = orderDetails.destinationAddress;
+        order.destinationLatitude = orderDetails.destinationLatitude;
+        order.destinationLongitude = orderDetails.destinationLongitude;
+        order.userComment = orderDetails.userComment;
+        order.pickupTime = orderDetails.pickupTime;
+        return order;
+    }
+
     private void assignSelectedOrder(){
         if(selectedOrderId == -1) return;
 
@@ -518,6 +484,23 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         });
     }
 
+    private void taxiStatusChanged(int status) {
+        assignedTaxi.status = status;
+        UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
+        if(status == Constants.TaxiStatus.Available.getValue() || status == Constants.TaxiStatus.Busy.getValue()){
+            initiateOrdersTracking();
+            getDistrictOrders();
+        } else {
+            disableOrdersTracking();
+        }
+    }
+
+    // UI
+    public void disableAssignButton(){
+        assignButton.setEnabled(false);
+    }
+
+    // MENU
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -657,19 +640,36 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-    private void taxiStatusChanged(int status) {
-        assignedTaxi.status = status;
-        UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
-        if(status == Constants.TaxiStatus.Available.getValue() || status == Constants.TaxiStatus.Busy.getValue()){
-            initiateOrdersTracking();
-            getDistrictOrders();
+    // ORDERS LIST
+    private void updateOrdersListView() {
+
+        if(ordersListAdapter != null){
+            Collections.sort(orders, distanceComparator);
+            ordersListAdapter.notifyDataSetChanged();
         } else {
-            disableOrdersTracking();
+            if(!orders.isEmpty()) {
+                mNoOrdersTxt.setVisibility(View.INVISIBLE);
+                Collections.sort(orders, distanceComparator);
+                ordersListAdapter = new ClientOrdersListAdapter(context,
+                        R.layout.fragment_order_list_item, orders);
+                ordersListView.setVisibility(View.VISIBLE);
+                ordersListView.setAdapter(ordersListAdapter);
+                ordersListView.setOnItemClickListener(this);
+            } else {
+                mNoOrdersTxt.setVisibility(View.VISIBLE);
+            }
         }
+
+        if(assignedTaxi.status == Constants.TaxiStatus.OffDuty.getValue()){
+            mNoOrdersTxt.setVisibility(View.INVISIBLE);
+            mOffDutyTxt.setVisibility(View.VISIBLE);
+        } else {
+            mOffDutyTxt.setVisibility(View.INVISIBLE);
+        }
+
+
     }
 
-
-    // ORDERS LIST
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
@@ -686,49 +686,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         assignButton.setEnabled(true);
     }
 
-    private void showToastError(RetrofitError error) {
-        Response response = error.getResponse();
-        if (response != null && response.getBody() != null) {
-                String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
-                if(!json.isEmpty()){
-                    JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
-                    String message = jobj.get("Message").getAsString();
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                   // Toast.makeText(context, json, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }else {
-                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-    }
-
-    private OrderDM fromOrderDetailsDM(OrderDetailsDM orderDetails){
-        OrderDM order = new OrderDM();
-        order.orderId = orderDetails.orderId;
-        order.orderAddress = orderDetails.orderAddress;
-        order.orderLatitude = orderDetails.orderLatitude;
-        order.orderLongitude = orderDetails.orderLongitude;
-        order.destinationAddress = orderDetails.destinationAddress;
-        order.destinationLatitude = orderDetails.destinationLatitude;
-        order.destinationLongitude = orderDetails.destinationLongitude;
-        order.userComment = orderDetails.userComment;
-        order.pickupTime = orderDetails.pickupTime;
-        return order;
-    }
-
-    private void updateOrderDM(OrderDM order, OrderDM newOrderDM){
-        order.orderId = newOrderDM.orderId;
-        order.orderAddress = newOrderDM.orderAddress;
-        order.orderLatitude = newOrderDM.orderLatitude;
-        order.orderLongitude = newOrderDM.orderLongitude;
-        order.destinationAddress = newOrderDM.destinationAddress;
-        order.destinationLatitude = newOrderDM.destinationLatitude;
-        order.destinationLongitude = newOrderDM.destinationLongitude;
-        order.userComment = newOrderDM.userComment;
-        order.pickupTime = newOrderDM.pickupTime;
-    }
-
+    // MESSAGES AND FEEDBACK
     /**
      * Shows the ordering progress UI
      */
@@ -752,6 +710,35 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void showToastError(RetrofitError error) {
+        Response response = error.getResponse();
+        if (response != null && response.getBody() != null) {
+            String json =  new String(((TypedByteArray)error.getResponse().getBody()).getBytes());
+            if(!json.isEmpty()){
+                JsonObject jobj = new Gson().fromJson(json, JsonObject.class);
+                String message = jobj.get("Message").getAsString();
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                // Toast.makeText(context, json, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }else {
+            Toast.makeText(context, error.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // HELPERS
+    public class DistanceComparator implements Comparator<OrderDM> {
+
+        @Override
+        public int compare(OrderDM o1, OrderDM o2) {
+            double val1 = (Math.abs(o1.orderLatitude - assignedTaxi.latitude) + Math.abs(o1.orderLongitude - assignedTaxi.longitude));
+            double val2 = (Math.abs(o2.orderLatitude - assignedTaxi.latitude) + Math.abs(o2.orderLongitude - assignedTaxi.longitude));
+            boolean result = val1 > val2;
+            return result ? 1 : -1;
         }
     }
 }

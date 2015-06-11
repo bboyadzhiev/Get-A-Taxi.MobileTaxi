@@ -109,6 +109,12 @@ public class OrderMap extends ActionBarActivity {
         stopService(trackingService);
     }
 
+    // BROADCASTS
+    private void broadcastOrderChanged() {
+        Intent broadcastOrderChanged = new Intent(Constants.ORDER_STATUS_CHANGED_BC);
+        sendBroadcast(broadcastOrderChanged);
+    }
+
     /**
      * The receiver for the Location Service - location update broadcasts
      * and the SignalR Notification Service - peer location change broadcasts
@@ -212,35 +218,6 @@ public class OrderMap extends ActionBarActivity {
         }
     };
 
-    private void checkPickupAvailability() {
-        if(hasAssignedOrder
-                && clientOrderDM.status == Constants.OrderStatus.Waiting.getValue()
-                && taxiUpdatedLocation != null
-                ){
-
-            if(taxiUpdatedLocation.distanceTo(clientLocation) < Constants.LOCATION_PICKUP_DISTANCE_THRESHOLD){
-                toggleButton(ButtonType.Pickup);
-            } else {
-                toggleButton(ButtonType.Cancel);
-            }
-        }
-    }
-
-    private boolean isTaxiOnDuty() {
-        if(taxi.status == Constants.TaxiStatus.Available.getValue() || taxi.status == Constants.TaxiStatus.Busy.getValue()){
-            return true;
-        }
-        return false;
-    }
-
-    private Location updateLocation(Location loc, double lat, double lon){
-        if(loc == null){
-            loc = new Location("update");
-        }
-        loc.setLatitude(lat);
-        loc.setLongitude(lon);
-        return loc;
-    }
 
     /**
      * ACTIVITY LIFECYCLE
@@ -260,6 +237,14 @@ public class OrderMap extends ActionBarActivity {
     @Override
     protected void onStart(){
         super.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Store taxi position
+        UserPreferencesManager.setAssignedTaxi(taxi, context);
     }
 
     @Override
@@ -303,14 +288,6 @@ public class OrderMap extends ActionBarActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-
-        // Store taxi position
-        UserPreferencesManager.setAssignedTaxi(taxi, context);
-    }
-
-    @Override
     public void onStop(){
         super.onStop();
 
@@ -325,7 +302,6 @@ public class OrderMap extends ActionBarActivity {
 
         unregisterReceiver(locationReceiver);
     }
-
 
     // INPUTS
     private void initInputs() {
@@ -528,31 +504,6 @@ public class OrderMap extends ActionBarActivity {
         });
     }
 
-
-    private void broadcastOrderChanged() {
-        Intent broadcastOrderChanged = new Intent(Constants.ORDER_STATUS_CHANGED_BC);
-        sendBroadcast(broadcastOrderChanged);
-    }
-
-    private void reportTaxiStatus(TaxiDetailsDM taxiDetailsDM){
-        if(taxiDetailsDM == null){
-            return;
-        }
-
-        RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Integer>() {
-            @Override
-            public void success(Integer stat, Response response) {
-                taxi.status = stat;
-                taxiReportedLocation = taxiUpdatedLocation;
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                showToastError(error);
-            }
-        });
-    }
-
     private void toggleButton(ButtonType button){
         if(button == ButtonType.Cancel){ // Cancel Order
             cancelOrderButton.setVisibility(View.VISIBLE);
@@ -598,7 +549,7 @@ public class OrderMap extends ActionBarActivity {
     }
 
     public enum ButtonType {
-        Place, Pickup, Cancel, Finish
+        Place, Pickup, Cancel, Finish;
     }
 
     // LOGIC
@@ -621,7 +572,7 @@ public class OrderMap extends ActionBarActivity {
                     try {
                         if (orderNotActive(assignedOrderDM)) return;
                         clientOrderDM = assignedOrderDM;
-                        if(clientUpdatedLocation == null){
+                        if (clientUpdatedLocation == null) {
                             clientLocation = new Location("fromServer");
                             clientLocation.setLatitude(clientOrderDM.orderLatitude);
                             clientLocation.setLongitude(clientOrderDM.orderLongitude);
@@ -668,7 +619,52 @@ public class OrderMap extends ActionBarActivity {
         });
     }
 
+    private OrderDetailsDM prepareDriverOrderDetails(OrderDetailsDM sourceOrderDM) {
+        sourceOrderDM.orderId = -1; // Will be updated later by the server
+        sourceOrderDM.orderLatitude = taxiLocation.getLatitude();
+        sourceOrderDM.orderLongitude = taxiLocation.getLongitude();
 
+        // In progress
+        sourceOrderDM.status = Constants.OrderStatus.InProgress.getValue();
+
+        sourceOrderDM.taxiId = taxi.taxiId;
+        sourceOrderDM.taxiPlate = taxi.plate;
+        sourceOrderDM.driverPhone = phoneNumber;
+        return sourceOrderDM;
+    }
+
+    private OrderDetailsDM completeOrderDetails(OrderDetailsDM sourceOrderDM) {
+        sourceOrderDM.orderId = assignedOrderId;
+        sourceOrderDM.destinationLatitude = taxiLocation.getLatitude();
+        sourceOrderDM.destinationLongitude = taxiLocation.getLongitude();
+
+        // Set to Finished
+        sourceOrderDM.status = Constants.OrderStatus.Finished.getValue();
+        // TaxiDetailsDM taxi = UserPreferencesManager.getAssignedTaxi(context);
+        sourceOrderDM.taxiId = taxi.taxiId;
+        sourceOrderDM.taxiPlate = taxi.plate;
+        sourceOrderDM.driverPhone = phoneNumber;
+        return sourceOrderDM;
+    }
+
+    private void reportTaxiStatus(TaxiDetailsDM taxiDetailsDM){
+        if(taxiDetailsDM == null){
+            return;
+        }
+
+        RestClientManager.updateTaxi(taxiDetailsDM, context, new Callback<Integer>() {
+            @Override
+            public void success(Integer stat, Response response) {
+                taxi.status = stat;
+                taxiReportedLocation = taxiUpdatedLocation;
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                showToastError(error);
+            }
+        });
+    }
 
     private boolean orderNotActive(OrderDetailsDM orderDM) {
         if(orderDM.status == Constants.OrderStatus.Cancelled.getValue() || orderDM.status == Constants.OrderStatus.Finished.getValue()){
@@ -709,36 +705,35 @@ public class OrderMap extends ActionBarActivity {
         invalidateOptionsMenu();
     }
 
+    private void checkPickupAvailability() {
+        if(hasAssignedOrder
+                && clientOrderDM.status == Constants.OrderStatus.Waiting.getValue()
+                && taxiUpdatedLocation != null
+                ){
 
-
-    private OrderDetailsDM prepareDriverOrderDetails(OrderDetailsDM sourceOrderDM) {
-        sourceOrderDM.orderId = -1; // Will be updated later by the server
-        sourceOrderDM.orderLatitude = taxiLocation.getLatitude();
-        sourceOrderDM.orderLongitude = taxiLocation.getLongitude();
-
-        // In progress
-        sourceOrderDM.status = Constants.OrderStatus.InProgress.getValue();
-
-        sourceOrderDM.taxiId = taxi.taxiId;
-        sourceOrderDM.taxiPlate = taxi.plate;
-        sourceOrderDM.driverPhone = phoneNumber;
-        return sourceOrderDM;
+            if(taxiUpdatedLocation.distanceTo(clientLocation) < Constants.LOCATION_PICKUP_DISTANCE_THRESHOLD){
+                toggleButton(ButtonType.Pickup);
+            } else {
+                toggleButton(ButtonType.Cancel);
+            }
+        }
     }
 
-    private OrderDetailsDM completeOrderDetails(OrderDetailsDM sourceOrderDM) {
-        sourceOrderDM.orderId = assignedOrderId;
-        sourceOrderDM.destinationLatitude = taxiLocation.getLatitude();
-        sourceOrderDM.destinationLongitude = taxiLocation.getLongitude();
-
-        // Set to Finished
-        sourceOrderDM.status = Constants.OrderStatus.Finished.getValue();
-       // TaxiDetailsDM taxi = UserPreferencesManager.getAssignedTaxi(context);
-        sourceOrderDM.taxiId = taxi.taxiId;
-        sourceOrderDM.taxiPlate = taxi.plate;
-        sourceOrderDM.driverPhone = phoneNumber;
-        return sourceOrderDM;
+    private boolean isTaxiOnDuty() {
+        if(taxi.status == Constants.TaxiStatus.Available.getValue() || taxi.status == Constants.TaxiStatus.Busy.getValue()){
+            return true;
+        }
+        return false;
     }
 
+    private Location updateLocation(Location loc, double lat, double lon){
+        if(loc == null){
+            loc = new Location("update");
+        }
+        loc.setLatitude(lat);
+        loc.setLongitude(lon);
+        return loc;
+    }
 
 
     // OPTIONS MENU
@@ -940,7 +935,7 @@ public class OrderMap extends ActionBarActivity {
         return marker;
     }
 
-
+    // MESSAGES AND FEEDBACK
     private void showToastError(RetrofitError error) {
         Response response = error.getResponse();
         if (response != null && response.getBody() != null) {

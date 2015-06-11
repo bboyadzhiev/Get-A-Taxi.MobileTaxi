@@ -3,9 +3,11 @@ package com.getataxi.mobiletaxi;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
@@ -55,7 +57,7 @@ import retrofit.mime.TypedByteArray;
 
 public class OrderMap extends ActionBarActivity {
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
-
+    private float lastZoom = Constants.MAP_ANIMATION_ZOOM;
 
     private Context context;
     private  String phoneNumber;
@@ -64,6 +66,7 @@ public class OrderMap extends ActionBarActivity {
 
     private Location taxiLocation;
     private Location taxiUpdatedLocation;
+    private Location taxiReportedLocation;
 
     private Location clientLocation;
     private Location clientUpdatedLocation;
@@ -131,7 +134,7 @@ public class OrderMap extends ActionBarActivity {
                 taxi.latitude = clientLat;
                 taxi.longitude = clientLon;
 
-                if(taxiUpdatedLocation.distanceTo(taxiLocation) > Constants.LOCATION_REST_REPORT_THRESHOLD){
+                if(taxiReportedLocation == null || taxiReportedLocation.distanceTo(taxiLocation) > Constants.LOCATION_REST_REPORT_THRESHOLD){
                     reportTaxiStatus(taxi);
                 }
 
@@ -152,7 +155,10 @@ public class OrderMap extends ActionBarActivity {
                 taxiLocationMarker = updateMarker(
                         taxiLocationMarker,
                         latLng,
-                        markerTitle, animateTaxiMarker
+                        markerTitle,
+                        R.mipmap.taxi,
+                        animateTaxiMarker,
+                        false
                 );
 
                 if(threshold < Constants.LOCATION_ACCURACY_THRESHOLD) {
@@ -162,7 +168,7 @@ public class OrderMap extends ActionBarActivity {
 
                 checkPickupAvailability();
 
-            } else if(action.equals(Constants.HUB_PEER_LOCATION_CHANGED_BC)){
+            } else if(action.equals(Constants.HUB_UPDATE_CLIENT_LOCATION_BC)){
                 // Client location change
 
                 // Checking if we have any order data
@@ -187,14 +193,21 @@ public class OrderMap extends ActionBarActivity {
                         clientLocationMarker,
                         latLng,
                         title,
-                        true
+                        R.mipmap.person,
+                        true,
+                        false
                 );
 
                 checkPickupAvailability();
 
             } else if(action.equals(Constants.HUB_CANCELLED_ORDER_BC)){
-
-                clearStoredOrder();
+                if(hasAssignedOrder) {
+                    int cancelledOrderId = intent.getIntExtra(Constants.HUB_CANCELLED_ORDER, -1);
+                    if(cancelledOrderId == assignedOrderId) {
+                        showAlertDialog(R.string.hub_order_cancelled, R.string.hub_client_cancelled_order, context);
+                        clearStoredOrder();
+                    }
+                }
             }
         }
     };
@@ -228,7 +241,6 @@ public class OrderMap extends ActionBarActivity {
         loc.setLongitude(lon);
         return loc;
     }
-
 
     /**
      * ACTIVITY LIFECYCLE
@@ -265,7 +277,10 @@ public class OrderMap extends ActionBarActivity {
         taxiLocationMarker = updateMarker(
                 taxiLocationMarker,
                 new LatLng(taxi.latitude, taxi.longitude),
-                taxi.plate, true);
+                taxi.plate,
+                R.mipmap.taxi,
+                true,
+                true);
         taxiLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi));
 
         hasAssignedOrder = UserPreferencesManager.hasAssignedOrder(context);
@@ -282,7 +297,8 @@ public class OrderMap extends ActionBarActivity {
         // Register for Location Service broadcasts
         filter.addAction(Constants.LOCATION_UPDATED);
         // And peer location change
-        filter.addAction(Constants.HUB_PEER_LOCATION_CHANGED_BC);
+        filter.addAction(Constants.HUB_UPDATE_CLIENT_LOCATION_BC);
+        filter.addAction(Constants.HUB_CANCELLED_ORDER_BC);
         registerReceiver(locationReceiver, filter);
     }
 
@@ -527,6 +543,7 @@ public class OrderMap extends ActionBarActivity {
             @Override
             public void success(Integer stat, Response response) {
                 taxi.status = stat;
+                taxiReportedLocation = taxiUpdatedLocation;
             }
 
             @Override
@@ -617,14 +634,16 @@ public class OrderMap extends ActionBarActivity {
                         clientLocationMarker = updateMarker(
                                 clientLocationMarker,
                                 new LatLng(assignedOrderDM.orderLatitude, assignedOrderDM.orderLongitude),
-                                title, true);
+                                title,
+                                R.mipmap.person,
+                                true, true);
 
-                        clientLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.person));
                         if (assignedOrderDM.destinationAddress != null && !assignedOrderDM.destinationAddress.isEmpty()) {
                             destinationLocationMarker = updateMarker(destinationLocationMarker,
                                     new LatLng(assignedOrderDM.destinationLatitude, assignedOrderDM.destinationLongitude),
                                     assignedOrderDM.destinationAddress,
-                                    false
+                                    R.mipmap.destination,
+                                    false, false
                             );
 
                             destinationLocationMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.destination));
@@ -684,6 +703,7 @@ public class OrderMap extends ActionBarActivity {
 
         clientOrderDM = null;
         stopTrackingService();
+        toggleButton(ButtonType.Place);
 
         // Enable menus
         invalidateOptionsMenu();
@@ -830,6 +850,7 @@ public class OrderMap extends ActionBarActivity {
 //                }
 
                 if(taxiLocationMarker != null){
+                    lastZoom = cameraPosition.zoom;
                     LatLng loc = new LatLng(taxiLocation.getLatitude(), taxiLocation.getLongitude());
                     animateMarker(taxiLocationMarker, loc, false);
                 }
@@ -882,29 +903,40 @@ public class OrderMap extends ActionBarActivity {
         });
     }
 
-    private Marker updateMarker(Marker marker, LatLng location, String title, boolean animate ){
+    private Marker updateMarker(Marker marker, LatLng location, String title, int iconId, boolean animateEnabled, boolean zoom ){
         if (marker == null){
+
             MarkerOptions markerOpts = new MarkerOptions()
                     .position(location)
-                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.taxi))
+                    .icon(BitmapDescriptorFactory.fromResource(iconId))
                     .title(title);
 
             marker = mMap.addMarker(markerOpts);
+
         } else {
             marker.setTitle(title);
         }
-        animateMarker(marker, location, false);
-        if(animate) {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(location)      // Sets the center of the map to location user
-                    .zoom(Constants.MAP_ANIMATION_ZOOM)                   // Sets the zoom
-                            //   .bearing(90)   // Sets the orientation of the camera to east
-                            //   .tilt(40)       // Sets the tilt of the camera to 30 degrees
-                    .build();                   // Creates a CameraPosition from the builder
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        }
         marker.showInfoWindow();
+        if(animateEnabled) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13));
+
+            CameraPosition cameraPosition;
+            if(zoom) {
+
+                cameraPosition =new CameraPosition.Builder()
+                        .target(location)      // Sets the center of the map to location user
+                        .zoom(Constants.MAP_ANIMATION_ZOOM)                    // Sets the zoom
+                        .build();                   // Creates a CameraPosition from the builder
+            } else {
+                cameraPosition =new CameraPosition.Builder()
+                        .target(location)      // Sets the center of the map to location user
+                        .zoom(lastZoom)
+                        .build();                   // Creates a CameraPosition from the builder
+            }
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            animateMarker(marker, location, false);
+        }
+
         return marker;
     }
 
@@ -950,6 +982,31 @@ public class OrderMap extends ActionBarActivity {
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
         }
+    }
+
+    public static void showAlertDialog(int title, int message, final Context context) {
+
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
+
+        alertDialog.setTitle(title);
+
+        alertDialog.setMessage(message);
+
+        alertDialog.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        alertDialog.setNegativeButton("Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        alertDialog.show();
     }
 
 }

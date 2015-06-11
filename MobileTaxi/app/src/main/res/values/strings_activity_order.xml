@@ -12,4 +12,5 @@
     <string name="order_not_found">Order was not found!</string>
     <string name="place_driver_order">Place custom order!</string>
     <string name="action_order_assignment_txt">Get orders list</string>
+    <string name="hub_client_cancelled_order">The client has cancelled the order!</string>
 </resources>

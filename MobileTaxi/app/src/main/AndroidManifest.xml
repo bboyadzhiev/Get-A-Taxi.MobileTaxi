@@ -78,7 +78,7 @@
             />
         <receiver android:name=".utils.OrdersNotificationReceiver">
             <intent-filter>
-                <action android:name= "com.getataxi.mobiletaxi.utilsaddedOrder" />
+                <action android:name= "com.getataxi.mobiletaxi.utils.HUB_ADDED_ORDER_BC" />
             </intent-filter>
         </receiver>
     </application>

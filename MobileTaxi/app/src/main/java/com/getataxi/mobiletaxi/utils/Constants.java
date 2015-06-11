@@ -29,13 +29,21 @@ public final class Constants {
 
     // TrackingHub
     public static final String TRACKING_HUB_PROXY = "trackingHub";
-    public static final String HUB_PEER_LOCATION_CHANGED = "updatePeerLocation";
-    public static final String HUB_MY_LOCATION_CHANGED = "locationChanged";
+
+    // Incoming
+    public static final String HUB_UPDATE_CLIENT_LOCATION = "updateClientLocation";
+
+    // Outgoing
+    public static final String HUB_TAXI_LOCATION_CHANGED = "taxiLocationChanged";
     public static final String HUB_TAXI_ASSIGNED_TO_ORDER = "taxiAssignedToOrder";
+
+    // Bi-directional
     public static final String HUB_ORDER_STATUS_CHANGED = "orderStatusChanged";
+
     public static final String LOCATION_REPORT_ENABLED = PACKAGE_NAME + ".LOCATION_REPORT_ENABLED";
+
     // Hub broadcasts
-    public static final String HUB_PEER_LOCATION_CHANGED_BC = PACKAGE_NAME +  HUB_PEER_LOCATION_CHANGED;
+    public static final String HUB_UPDATE_CLIENT_LOCATION_BC = PACKAGE_NAME + HUB_UPDATE_CLIENT_LOCATION;
     // Broadcasts reaction
     public static final String ORDER_STATUS_CHANGED_BC = PACKAGE_NAME + HUB_ORDER_STATUS_CHANGED;
 
@@ -48,7 +56,7 @@ public final class Constants {
     public static final String HUB_UPDATED_ORDER =  "updatedOrder";
     // Hub broadcasts
     public static final String HUB_ORDERS_UPDATED_BC = PACKAGE_NAME + HUB_UPDATE_ORDERS_LIST;
-    public static final String HUB_ADDED_ORDER_BC = PACKAGE_NAME +  HUB_ADDED_ORDER;
+    public static final String HUB_ADDED_ORDER_BC = PACKAGE_NAME + ".HUB_ADDED_ORDER_BC";
     public static final String HUB_CANCELLED_ORDER_BC = PACKAGE_NAME +  HUB_CANCELLED_ORDER;
     public static final String HUB_ASSIGNED_ORDER_BC = PACKAGE_NAME +  HUB_ASSIGNED_ORDER;
     public static final String HUB_UPDATED_ORDER_BC = PACKAGE_NAME +  HUB_UPDATED_ORDER;
@@ -73,10 +81,10 @@ public final class Constants {
     public static final float LOCATION_PICKUP_DISTANCE_THRESHOLD = 100; // meters
 
     // Report location on change threshold
-    public static final float LOCATION_REST_REPORT_THRESHOLD = 500;
+    public static final float LOCATION_REST_REPORT_THRESHOLD = 1000; // meters
 
     // Times
-    public static final int LOCATION_UPDATE_INTERVAL = 10000; // milliseconds
+    public static final int LOCATION_UPDATE_INTERVAL = 1000; // milliseconds
     public static final int LOCATION_UPDATE_DISTANCE = 1; // meters
     public static final int LOCATION_TIMEOUT = 1000 * 60 * 5; // five minutes;
 

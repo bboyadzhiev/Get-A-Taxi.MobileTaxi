@@ -130,6 +130,10 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
         context.startService(locationService);
 
+        if(assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) {
+            initiateOrdersTracking();
+            getDistrictOrders();
+        }
 
     }
 
@@ -154,12 +158,13 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     @Override
     protected void onStart(){
         super.onStart();
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        getDistrictOrders();
         gson = new GsonBuilder()
                 .setDateFormat(Constants.GSON_DATE_FORMAT)
                 .create();
@@ -183,9 +188,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         // And broadcasts receiver
         registerReceiver(broadcastsReceiver, filter);
 
-        if(assignedTaxi.status == Constants.TaxiStatus.Available.getValue()) {
-            initiateOrdersTracking();
-        }
+
 
         if(UserPreferencesManager.hasAssignedOrder(context)){
             // If still active order, goes directly to order map
@@ -198,8 +201,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     @Override
     protected void onPause(){
         super.onPause();
-
-
         ///UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
         unregisterReceiver(broadcastsReceiver);
     }
@@ -207,21 +208,16 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     @Override
     protected void onStop(){
         super.onStop();
-
-
-
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         //Stop location service
         Intent locationService = new Intent(OrderAssignmentActivity.this, LocationService.class);
         stopService(locationService);
 
         disableOrdersTracking();
-
     }
 
     // ORDERS TRACKING SERVICE
@@ -230,7 +226,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         ordersTrackingIntent.putExtra(Constants.BASE_URL_STORAGE, UserPreferencesManager.getBaseUrl(context));
         ordersTrackingIntent.putExtra(Constants.DISTRICT_ID, UserPreferencesManager.getDistrictId(context));
         startService(ordersTrackingIntent);
-        getDistrictOrders();
     }
 
     private void disableOrdersTracking(){
@@ -386,28 +381,6 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
     }
 
     private void updateOrdersListView() {
-//        if(assignedTaxi.status == Constants.TaxiStatus.OffDuty.getValue()){
-//            mNoOrdersTxt.setVisibility(View.INVISIBLE);
-//            mOffDutyTxt.setVisibility(View.VISIBLE);
-//        } else {
-//            mOffDutyTxt.setVisibility(View.INVISIBLE);
-//            if(ordersListAdapter != null){
-//                    Collections.sort(orders, distanceComparator);
-//                    ordersListAdapter.notifyDataSetChanged();
-//            } else {
-//                if(!orders.isEmpty()) {
-//                    mNoOrdersTxt.setVisibility(View.INVISIBLE);
-//                    Collections.sort(orders, distanceComparator);
-//                    ordersListAdapter = new ClientOrdersListAdapter(context,
-//                            R.layout.fragment_order_list_item, orders);
-//                    ordersListView.setVisibility(View.VISIBLE);
-//                    ordersListView.setAdapter(ordersListAdapter);
-//                    ordersListView.setOnItemClickListener(this);
-//                } else {
-//                    mNoOrdersTxt.setVisibility(View.VISIBLE);
-//                }
-//            }
-//        }
 
         if(ordersListAdapter != null){
             Collections.sort(orders, distanceComparator);
@@ -689,6 +662,7 @@ public class OrderAssignmentActivity extends ActionBarActivity implements
         UserPreferencesManager.setAssignedTaxi(assignedTaxi, context);
         if(status == Constants.TaxiStatus.Available.getValue() || status == Constants.TaxiStatus.Busy.getValue()){
             initiateOrdersTracking();
+            getDistrictOrders();
         } else {
             disableOrdersTracking();
         }

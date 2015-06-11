@@ -46,7 +46,6 @@ public class SignalROrdersService extends Service {
     public void onCreate() {
         super.onCreate();
         districtId = -1;
-
     }
 
     @Override
@@ -171,7 +170,7 @@ public class SignalROrdersService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        proxy.invoke("close");
+        proxy.invoke(Constants.HUB_DISCONNECT);
         connection.stop();
         Toast.makeText(this, getString(R.string.district_orders_monitoring_service_stopped), Toast.LENGTH_LONG).show();
     }

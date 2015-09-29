@@ -18,6 +18,9 @@ public final class Constants {
     //public static final String DEFAULT_URL = "http://172.16.250.145:14938";
     public static final String BASE_URL_STORAGE = PACKAGE_NAME + ".BASE_URL";
 
+    public static final double INIT_LAT= 42.68243;
+    public static final double INIT_LON= 25.29052;
+    public static final int INIT_ZOOM = 6;
 
     // HUBS
     // endpoints, DO NOT CHANGE
@@ -68,7 +71,7 @@ public final class Constants {
 
     // Connection timeouts in milliseconds
     public static final int READ_TIMEOUT = 15000;
-    public static final int CONNECT_TIMEOUT = 15000;
+    public static final int CONNECT_TIMEOUT = 20000;
     public static final int WRITE_TIMEOUT = 5000;
 
 

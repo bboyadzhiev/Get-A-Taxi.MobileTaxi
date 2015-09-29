@@ -815,6 +815,8 @@ public class OrderMap extends ActionBarActivity {
                     .getMap();
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
+                LatLng initialLocation = new LatLng(Constants.INIT_LAT, Constants.INIT_LON);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, Constants.INIT_ZOOM));
                 setUpMap();
             }
         }
